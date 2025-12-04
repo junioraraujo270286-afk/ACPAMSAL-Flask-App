@@ -1,5 +1,5 @@
 import sys
-import os
+import os # Importação necessária para ler a variável de ambiente do Heroku
 # Adiciona o diretório atual ao sys.path para garantir que 'database' seja encontrado
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -22,6 +22,20 @@ from database import init_db, db, Usuario, Associado, Pagamento, Despesa, Config
 app = Flask(__name__)
 # MUDE ESTA CHAVE SECRETA EM PRODUÇÃO!
 app.secret_key = 'chave_secreta_muito_forte_e_unica_acpamsal_12345'
+
+# LÓGICA DE CONEXÃO AO BANCO DE DADOS (SQLite para dev / PostgreSQL para Heroku)
+if 'DATABASE_URL' in os.environ:
+    # Heroku PostgreSQL (usa a variável de ambiente, ajustando o esquema para SQLAlchemy)
+    # A SQLAlchemy moderna precisa que "postgres://" seja "postgresql://"
+    uri = os.environ.get('DATABASE_URL')
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = uri
+else:
+    # SQLite local (para desenvolvimento)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///acpamsal.db'
+    
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializa o banco de dados e cria as tabelas
 init_db(app)
@@ -60,7 +74,6 @@ def inject_now():
 def get_mensalidade_base():
     config = Configuracao.query.filter_by(chave='mensalidade_base').first()
     try:
-        # Agora retorna 10.00, conforme configurado em database.py
         return float(config.valor) 
     except (ValueError, AttributeError):
         return 10.00 # Valor de fallback
@@ -68,10 +81,8 @@ def get_mensalidade_base():
 def get_data_inicio_cobranca():
     config = Configuracao.query.filter_by(chave='data_inicio_cobranca').first()
     try:
-        # Retorna a data solicitada (2025-11-05) como objeto date
         return datetime.strptime(config.valor, '%Y-%m-%d').date()
     except (ValueError, AttributeError):
-        # Valor de fallback: data de hoje
         return datetime.now().date() 
 
 def get_meses_devidos(associado_id):
@@ -81,36 +92,33 @@ def get_meses_devidos(associado_id):
     if not assoc:
         return [], 0.00
     
-    # DATA DE REFERÊNCIA: Usa o início da cobrança configurado
-    data_inicio_cobranca = get_data_inicio_cobranca().replace(day=1) # Ajusta para o 1º dia do mês
+    data_inicio_cobranca = get_data_inicio_cobranca().replace(day=1)
 
     ultimo_pagamento = Pagamento.query.filter_by(associado_id=associado_id).order_by(Pagamento.mes_referencia.desc()).first()
     
     if ultimo_pagamento:
-        # Se houver pagamento, começa a contar a partir do mês seguinte
         start_date = ultimo_pagamento.mes_referencia + relativedelta(months=1)
     else:
-        # Se não houver pagamento, começa a contar a partir da data de início da cobrança configurada
         start_date = data_inicio_cobranca
 
-    # Garante que a data de início da contagem não seja anterior à data de início da cobrança configurada
     if start_date < data_inicio_cobranca:
         start_date = data_inicio_cobranca
 
-    hoje = datetime.now().date().replace(day=1) # CORRIGIDO: usa .date() e ajusta o dia
+    hoje = datetime.now().date().replace(day=1)
     
     meses_devidos = []
 
-    # CORRIGIDO: Comparações diretas de objetos date
     if start_date > hoje:
         return [], 0.00
 
     current = start_date
     while current <= hoje:
-        # current é datetime.date, não precisa de .date()
         pagamento_existe = Pagamento.query.filter(
             Pagamento.associado_id == associado_id,
-            func.strftime('%Y-%m', Pagamento.mes_referencia) == current.strftime('%Y-%m')
+            # Em PostgreSQL (Heroku), func.strftime pode dar erro. 
+            # É mais seguro usar comparações diretas de date/datetime ou extrair o ano/mês
+            # MANTENDO O PADRÃO SQLITE/POSTGRES GENÉRICO ABAIXO.
+            Pagamento.mes_referencia == current
         ).first()
 
         if not pagamento_existe:
@@ -144,17 +152,13 @@ def get_dash_metrics():
     
     total_associados = Associado.query.count()
     
-    # Garante que, se o resultado da soma for None (sem despesas), ele use 0.00 e seja float
     total_despesas = float(db.session.query(func.sum(Despesa.valor)).scalar() or 0.00)
     
-    # 1. Calcular a dívida total (somatório da dívida de todos os associados)
     total_divida_estimada = 0.00
     for assoc in Associado.query.all():
         _, divida = get_meses_devidos(assoc.id)
         total_divida_estimada += divida
         
-    # 2. Calcular receita total
-    # Garante que, se o resultado da soma for None (sem pagamentos), ele use 0.00 e seja float
     total_receita = float(db.session.query(func.sum(Pagamento.valor_pago)).scalar() or 0.00)
     
     saldo_aproximado = total_receita - total_despesas
@@ -236,7 +240,6 @@ def dashboard_publico():
     config = Configuracao.query.all()
     config_dict = {c.chave: c.valor for c in config}
     
-    # Renderiza o dashboard público sem resultados de busca por padrão
     return render_template('dashboard_publico.html', config=config_dict, resultado_busca=None)
 
 @app.route('/consulta_associado', methods=['POST'])
@@ -254,7 +257,6 @@ def consulta_associado():
     }
     
     if termo:
-        # A busca é feita em vários campos (Matrícula, Nome, Placa, RG, CPF)
         assoc = Associado.query.filter(
             or_(
                 Associado.matricula.ilike(f'%{termo}%'),
@@ -266,10 +268,8 @@ def consulta_associado():
         ).first()
 
         if assoc:
-            # Obtém apenas o status simplificado para a consulta pública
             status_financeiro_completo, _ = get_status_financeiro_detalhado(assoc.id)
             
-            # Mapeia para o status simplificado
             if 'Ativo' in status_financeiro_completo:
                 status_final = 'ASSOCIADO ATIVO (EM DIAS)'
                 cor_status = 'success'
@@ -314,8 +314,8 @@ def listar_associados():
             'matricula': assoc.matricula,
             'nome': assoc.nome,
             'placa': assoc.placa,
-            'status': status_financeiro, # Novo Status
-            'status_class': status_class, # Para cores no painel
+            'status': status_financeiro,
+            'status_class': status_class,
             'divida': divida_formatada,
             'total_devido': len(meses_devidos)
         })
@@ -417,7 +417,6 @@ def gerenciar_mensalidades_web():
     for assoc in associados_raw:
         meses_devidos, divida_total = get_meses_devidos(assoc.id)
         
-        # Novo: Usa o status financeiro detalhado
         status_financeiro, status_class = get_status_financeiro_detalhado(assoc.id)
         
         total_devido += len(meses_devidos)
@@ -428,7 +427,7 @@ def gerenciar_mensalidades_web():
             'id': assoc.id,
             'matricula': assoc.matricula,
             'nome': assoc.nome,
-            'status': status_financeiro, # Novo Status
+            'status': status_financeiro,
             'status_class': status_class,
             'divida': divida_formatada,
             'total_devido': len(meses_devidos),
@@ -437,7 +436,6 @@ def gerenciar_mensalidades_web():
         
     return render_template('mensalidades.html', associados=associados, total_devido=total_devido, mensalidade_base=mensalidade_base)
 
-# Rota para Criar/Remover (Continua a mesma lógica)
 @app.route('/pagamento/<int:associado_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -450,13 +448,12 @@ def registrar_pagamento(associado_id):
         acao = request.form.get('acao')
         
         try:
-            # Garante que a data seja o primeiro dia do mês, como o banco de dados espera (mes_referencia)
             mes_referencia = datetime.strptime(mes_ano_str, '%Y-%m').date().replace(day=1)
             
             if acao == 'registrar':
                 pagamento_existente = Pagamento.query.filter(
                     Pagamento.associado_id == associado_id,
-                    Pagamento.mes_referencia == mes_referencia # Comparação direta de objetos date
+                    Pagamento.mes_referencia == mes_referencia
                 ).first()
                 
                 if pagamento_existente:
@@ -474,7 +471,7 @@ def registrar_pagamento(associado_id):
             elif acao == 'remover':
                 pagamento_remover = Pagamento.query.filter(
                     Pagamento.associado_id == associado_id,
-                    Pagamento.mes_referencia == mes_referencia # Comparação direta de objetos date
+                    Pagamento.mes_referencia == mes_referencia
                 ).first()
                 
                 if pagamento_remover:
@@ -494,7 +491,6 @@ def registrar_pagamento(associado_id):
 
     meses_devidos_lista, _ = get_meses_devidos(associado_id)
     
-    # Busca histórico de pagamentos para exibição
     historico_pagamentos = Pagamento.query.filter_by(associado_id=associado_id).order_by(Pagamento.mes_referencia.desc()).all()
     
     return render_template(
@@ -503,7 +499,7 @@ def registrar_pagamento(associado_id):
         associado_id=associado_id, 
         mensalidade_base=mensalidade_base,
         meses_devidos_lista=meses_devidos_lista,
-        historico_pagamentos=historico_pagamentos # Adicionado para exibir histórico
+        historico_pagamentos=historico_pagamentos
     )
 
 
@@ -584,13 +580,11 @@ def criar_usuario_consulta_publica():
         
         email_gerado = f'{nome.lower().replace(" ", "")}@publico.com'
         
-        # Validar se o nome de usuário ou email já existe
         if Usuario.query.filter_by(nome=nome, tipo='publico').first() or Usuario.query.filter_by(email=email_gerado).first():
             flash('Erro: Já existe um usuário de consulta pública com este nome ou o e-mail gerado.', 'danger')
             return redirect(url_for('criar_usuario_consulta_publica'))
 
         try:
-            # Usuário público tem a senha armazenada como texto simples
             novo_publico = Usuario(
                 email=email_gerado,
                 nome=nome,
@@ -635,12 +629,9 @@ def remover_usuario_publico(user_id):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all() é chamado dentro de init_db
         
         # CRIAÇÃO DO USUÁRIO ADMINISTRADOR PADRÃO (CREDENCIAIS SOLICITADAS)
-        # Email: acpamsal@gmail.com | Senha: 230808Deus#
         if not Usuario.query.filter_by(email='acpamsal@gmail.com').first():
-            # Gera o hash da senha solicitada
             hashed_password = generate_password_hash('230808Deus#') 
             
             novo_admin = Usuario(
