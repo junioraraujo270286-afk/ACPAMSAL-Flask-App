@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Mensalidades{% endblock %}
+
+{% block page_header %}Gerenciamento de Mensalidades (Base: R$ {{ "{:,.2f}".format(mensalidade_base).replace(",", "X").replace(".", ",").replace("X", ".") }}){% endblock %}
+
+{% block content %}
+<div class="alert alert-info">
+    Clique no botão "Pagar/Ver Dívida" para registrar ou remover pagamentos de meses específicos.
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Matrícula</th>
+                <th>Nome</th>
+                <th>Status</th>
+                <th>M. Devidos ({{ total_devido }})</th>
+                <th>Dívida Total</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assoc in associados %}
+            <tr>
+                <td>{{ assoc.matricula }}</td>
+                <td>{{ assoc.nome }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if 'Ativo' in assoc.status else ('warning' if 'Inativo' in assoc.status else 'danger') }}">
+                        {{ assoc.status }}
+                    </span>
+                </td>
+                <td>
+                    {% if assoc.meses_devidos %}
+                        <span class="badge bg-danger">{{ assoc.total_devido }} Meses</span>
+                    {% else %}
+                        <span class="badge bg-success">0 Meses</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <strong class="text-{{ 'success' if assoc.divida == 'R$ 0.00' else 'danger' }}">{{ assoc.divida }}</strong>
+                </td>
+                <td>
+                    <a href="{{ url_for('registrar_pagamento', associado_id=assoc.id) }}" class="btn btn-sm btn-primary" title="Registrar Pagamento"><i class="bi bi-cash-coin"></i> Pagar/Ver Dívida</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Nenhum associado encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

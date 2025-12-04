@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Administrativo{% endblock %}
+
+{% block page_header %}Dashboard Administrativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h3 class="mb-4">📊 Resumo Financeiro</h3>
+    <div class="row">
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 bg-primary text-white">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-uppercase mb-1">
+                                Total de Associados
+                            </div>
+                            <div class="h5 mb-0 fw-bold">{{ total_associados }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people-fill fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 bg-success text-white">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-uppercase mb-1">
+                                Receita Total (Arrecadado)
+                            </div>
+                            <div class="h5 mb-0 fw-bold">R$ {{ '{:,.2f}'.format(total_receita).replace('.', 'X').replace(',', '.').replace('X', ',') }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-dollar fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 bg-warning text-white">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-uppercase mb-1">
+                                Despesas Totais
+                            </div>
+                            <div class="h5 mb-0 fw-bold">R$ {{ '{:,.2f}'.format(total_despesas).replace('.', 'X').replace(',', '.').replace('X', ',') }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-bag-dash-fill fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% set saldo_class = 'bg-info' if saldo_aproximado >= 0 else 'bg-danger' %}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 {{ saldo_class }} text-white">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-uppercase mb-1">
+                                Saldo Aproximado
+                            </div>
+                            <div class="h5 mb-0 fw-bold">R$ {{ '{:,.2f}'.format(saldo_aproximado).replace('.', 'X').replace(',', '.').replace('X', ',') }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-wallet2 fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h3 class="mb-4 mt-3">⚠️ Dívidas e Configurações</h3>
+    <div class="row">
+
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-danger shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-cash-stack"></i> Dívida Estimada (Atrasos)</h5>
+                    <p class="card-text h2 fw-bold">R$ {{ '{:,.2f}'.format(total_divida).replace('.', 'X').replace(',', '.').replace('X', ',') }}</p>
+                    <a href="{{ url_for('gerenciar_mensalidades_web') }}" class="btn btn-light"><i class="bi bi-eye"></i> Ver Detalhes</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-secondary shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-person-gear"></i> Usuários de Consulta</h5>
+                    <p class="card-text h2 fw-bold" style="opacity: 0;">.</p> {# Placeholder para alinhar #}
+                    <a href="{{ url_for('criar_usuario_consulta_publica') }}" class="btn btn-light"><i class="bi bi-person-plus-fill"></i> Gerenciar Acessos</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-info shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-gear-fill"></i> Mensalidade Base</h5>
+                    <p class="card-text h2 fw-bold">R$ {{ '{:,.2f}'.format(mensalidade_base).replace('.', 'X').replace(',', '.').replace('X', ',') }}</p>
+                    <a href="#" class="btn btn-light disabled"><i class="bi bi-pencil-fill"></i> Ajustar Configuração</a> {# Rota de ajuste não implementada #}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

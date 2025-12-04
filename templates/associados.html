@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Associados{% endblock %}
+
+{% block page_header %}Gerenciamento de Associados{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ url_for('cadastrar_associado') }}" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Novo Associado</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Matrícula</th>
+                <th>Nome</th>
+                <th>Placa</th>
+                <th>Status Financeiro</th>
+                <th>Dívida Estimada</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assoc in associados %}
+            <tr>
+                <td>{{ assoc.matricula }}</td>
+                <td>{{ assoc.nome }}</td>
+                <td>{{ assoc.placa }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if 'Ativo' in assoc.status else ('warning' if 'Inativo' in assoc.status else 'danger') }}">
+                        {{ assoc.status }}
+                    </span>
+                </td>
+                <td>{{ assoc.divida }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('editar_associado', id=assoc.id) }}" class="btn btn-sm btn-primary" title="Editar Dados"><i class="bi bi-pencil-square"></i></a>
+                        <form method="POST" action="{{ url_for('remover_associado', id=assoc.id) }}" onsubmit="return confirm('Tem certeza que deseja remover o associado {{ assoc.nome }} e todo o seu histórico de pagamentos?');" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Remover Associado"><i class="bi bi-trash-fill"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Nenhum associado cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Login - {{ instituicao }}{% endblock %}
+
+{% block page_header %}Acesso ao Sistema{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-lg p-3 mb-5 bg-body rounded">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">Login Administrativo</h4>
+                <small>Use suas credenciais de administrador</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="senha" name="senha" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-1">Acesso Público (Consulta de Status):</p>
+                <form method="POST" action="{{ url_for('login_publico') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Usuário Público" name="usuario" required>
+                        <input type="password" class="form-control" placeholder="Senha" name="senha" required>
+                        <button class="btn btn-secondary" type="submit">Consulta</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
