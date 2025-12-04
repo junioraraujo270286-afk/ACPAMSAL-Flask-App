@@ -1,5 +1,6 @@
 import sys
 import os # Importação necessária para ler a variável de ambiente do Heroku
+
 # Adiciona o diretório atual ao sys.path para garantir que 'database' seja encontrado
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -74,6 +75,7 @@ def inject_now():
 def get_mensalidade_base():
     config = Configuracao.query.filter_by(chave='mensalidade_base').first()
     try:
+        # Tenta converter o valor para float, caso contrário usa fallback
         return float(config.valor) 
     except (ValueError, AttributeError):
         return 10.00 # Valor de fallback
@@ -81,6 +83,7 @@ def get_mensalidade_base():
 def get_data_inicio_cobranca():
     config = Configuracao.query.filter_by(chave='data_inicio_cobranca').first()
     try:
+        # Tenta converter o valor para data
         return datetime.strptime(config.valor, '%Y-%m-%d').date()
     except (ValueError, AttributeError):
         return datetime.now().date() 
@@ -113,11 +116,9 @@ def get_meses_devidos(associado_id):
 
     current = start_date
     while current <= hoje:
+        # A verificação de existência do pagamento é feita pelo mês de referência
         pagamento_existe = Pagamento.query.filter(
             Pagamento.associado_id == associado_id,
-            # Em PostgreSQL (Heroku), func.strftime pode dar erro. 
-            # É mais seguro usar comparações diretas de date/datetime ou extrair o ano/mês
-            # MANTENDO O PADRÃO SQLITE/POSTGRES GENÉRICO ABAIXO.
             Pagamento.mes_referencia == current
         ).first()
 
@@ -186,6 +187,7 @@ def login():
         
         usuario = Usuario.query.filter_by(email=email).first()
         
+        # Lógica de Login: 1. Usuário existe? 2. É admin? 3. Senha coincide com o hash?
         if usuario and usuario.tipo == 'admin' and check_password_hash(usuario.senha, senha):
             session['logged_in'] = True
             session['user_id'] = usuario.id
@@ -206,6 +208,7 @@ def login_publico():
     
     usuario = Usuario.query.filter_by(nome=nome_usuario, tipo='publico').first()
     
+    # Usuário público não usa hash, a senha deve coincidir exatamente
     if usuario and usuario.senha == senha_publica: 
         session['logged_in'] = True
         session['user_id'] = usuario.id
@@ -307,6 +310,7 @@ def listar_associados():
         
         status_financeiro, status_class = get_status_financeiro_detalhado(assoc.id)
         
+        # Formatação de moeda BRL
         divida_formatada = f"R$ {'{:,.2f}'.format(divida_total).replace('.', 'X').replace(',', '.').replace('X', ',')}"
         
         associados.append({
@@ -421,6 +425,7 @@ def gerenciar_mensalidades_web():
         
         total_devido += len(meses_devidos)
         
+        # Formatação de moeda BRL
         divida_formatada = f"R$ {'{:,.2f}'.format(divida_total).replace('.', 'X').replace(',', '.').replace('X', ',')}"
         
         associados.append({
@@ -585,6 +590,7 @@ def criar_usuario_consulta_publica():
             return redirect(url_for('criar_usuario_consulta_publica'))
 
         try:
+            # Usuários públicos não usam hash, por conveniência e requisito inicial
             novo_publico = Usuario(
                 email=email_gerado,
                 nome=nome,
@@ -624,13 +630,19 @@ def remover_usuario_publico(user_id):
     return redirect(url_for('criar_usuario_consulta_publica'))
 
 # ----------------------------------------------------
-# 8. INICIALIZAÇÃO E ADMIN DEFAULT
+# 8. INICIALIZAÇÃO
 # ----------------------------------------------------
 
 if __name__ == '__main__':
+    # O setup do banco de dados e do admin no Heroku é feito através do run_setup.py.
+    # Aqui, fazemos o setup local apenas para fins de desenvolvimento.
     with app.app_context():
+        # Apenas garante a criação de tabelas e do admin localmente
         
-        # CRIAÇÃO DO USUÁRIO ADMINISTRADOR PADRÃO (CREDENCIAIS SOLICITADAS)
+        # A função init_db(app) já foi chamada no topo, mas garantimos o create_all
+        db.create_all() 
+        
+        # Se for a primeira execução local, cria o admin
         if not Usuario.query.filter_by(email='acpamsal@gmail.com').first():
             hashed_password = generate_password_hash('230808Deus#') 
             
@@ -644,8 +656,9 @@ if __name__ == '__main__':
             db.session.commit()
             
             print("----------------------------------------------------")
-            print("🚀 SETUP CONCLUÍDO!")
+            print("🚀 SETUP LOCAL CONCLUÍDO!")
             print("ADMIN CRIADO: acpamsal@gmail.com | SENHA: 230808Deus#")
             print("----------------------------------------------------")
             
+    # Rodar a aplicação em ambiente de desenvolvimento
     app.run(debug=True)
