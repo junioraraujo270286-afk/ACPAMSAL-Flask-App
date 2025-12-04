@@ -1,18 +1,16 @@
 import sys
 import os 
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from functools import wraps
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-# Embora importemos o generate_password_hash, ele não será usado para o admin principal.
 from werkzeug.security import generate_password_hash, check_password_hash 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, or_
 
 # Importar modelos do nosso arquivo database.py
+# Nota: É crucial que database.py exista e contenha os modelos
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from database import init_db, db, Usuario, Associado, Pagamento, Despesa, Configuracao
 
 # ----------------------------------------------------
@@ -20,16 +18,18 @@ from database import init_db, db, Usuario, Associado, Pagamento, Despesa, Config
 # ----------------------------------------------------
 
 app = Flask(__name__)
-# MUDE ESTA CHAVE SECRETA EM PRODUÇÃO!
+# CHAVE SECRETA DO FLASK
 app.secret_key = 'chave_secreta_muito_forte_e_unica_acpamsal_12345'
 
 # LÓGICA DE CONEXÃO AO BANCO DE DADOS (SQLite para dev / PostgreSQL para Heroku)
 if 'DATABASE_URL' in os.environ:
+    # Heroku PostgreSQL
     uri = os.environ.get('DATABASE_URL')
     if uri.startswith("postgres://"):
         uri = uri.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = uri
 else:
+    # SQLite local
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///acpamsal.db'
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -42,6 +42,7 @@ init_db(app)
 # ----------------------------------------------------
 
 def login_required(f):
+    """Garante que apenas usuários logados possam acessar a rota."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'logged_in' not in session:
@@ -51,6 +52,7 @@ def login_required(f):
     return decorated_function
 
 def admin_required(f):
+    """Garante que apenas administradores possam acessar a rota."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get('user_type') != 'admin':
@@ -61,6 +63,7 @@ def admin_required(f):
 
 @app.context_processor
 def inject_now():
+    """Injeta o objeto datetime para uso nos templates."""
     return {'datetime': datetime, 'now': datetime.now()}
 
 # ----------------------------------------------------
@@ -68,6 +71,7 @@ def inject_now():
 # ----------------------------------------------------
 
 def get_mensalidade_base():
+    """Busca a mensalidade base configurada ou usa fallback."""
     config = Configuracao.query.filter_by(chave='mensalidade_base').first()
     try:
         return float(config.valor) 
@@ -75,6 +79,7 @@ def get_mensalidade_base():
         return 10.00 
 
 def get_data_inicio_cobranca():
+    """Busca a data de início da cobrança configurada ou usa a data atual."""
     config = Configuracao.query.filter_by(chave='data_inicio_cobranca').first()
     try:
         return datetime.strptime(config.valor, '%Y-%m-%d').date()
@@ -82,6 +87,7 @@ def get_data_inicio_cobranca():
         return datetime.now().date() 
 
 def get_meses_devidos(associado_id):
+    """Calcula os meses em atraso e o valor total devido por um associado."""
     mensalidade_base = get_mensalidade_base()
     assoc = Associado.query.get(associado_id)
     if not assoc: return [], 0.00
@@ -120,6 +126,7 @@ def get_meses_devidos(associado_id):
     return meses_devidos, divida_total
 
 def get_status_financeiro_detalhado(associado_id):
+    """Retorna o status financeiro do associado (Ativo, Atrasado, Inativo, Desligado)."""
     meses_devidos, _ = get_meses_devidos(associado_id)
     num_meses_devidos = len(meses_devidos)
     
@@ -135,6 +142,7 @@ def get_status_financeiro_detalhado(associado_id):
         return 'Desconhecido', 'secondary'
 
 def get_dash_metrics():
+    """Busca todas as métricas financeiras necessárias para o Painel Administrativo."""
     mensalidade_base = get_mensalidade_base()
     total_associados = Associado.query.count()
     total_despesas = float(db.session.query(func.sum(Despesa.valor)).scalar() or 0.00)
@@ -163,14 +171,14 @@ def get_dash_metrics():
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Rota para login de administradores."""
+    """Rota para login de administradores e público."""
     if request.method == 'POST':
         email = request.form.get('email')
         senha = request.form.get('senha')
         
         usuario = Usuario.query.filter_by(email=email).first()
         
-        # === LÓGICA DE LOGIN ADMIN PRINCIPAL (SEM HASH PARA RESOLVER O PROBLEMA) ===
+        # === LÓGICA DE LOGIN ADMIN PRINCIPAL (SENHA SIMPLES PARA RESOLVER PROBLEMA DO HASH) ===
         if usuario and usuario.email == 'acpamsal@gmail.com' and senha == '230808Deus#':
             session['logged_in'] = True
             session['user_id'] = usuario.id
@@ -179,7 +187,6 @@ def login():
             return redirect(url_for('admin_dashboard'))
         
         # === LÓGICA DE LOGIN PARA OUTROS ADMINS (Com HASH) ===
-        # Qualquer outro admin criado (ex: teste@admin.com) ainda usará o hash
         if usuario and usuario.tipo == 'admin' and check_password_hash(usuario.senha, senha):
             session['logged_in'] = True
             session['user_id'] = usuario.id
@@ -194,12 +201,13 @@ def login():
 
 @app.route('/login_publico', methods=['POST'])
 def login_publico():
-    """Login para usuários de consulta pública."""
+    """Login para usuários de consulta pública (sem hash)."""
     nome_usuario = request.form.get('usuario')
     senha_publica = request.form.get('senha')
     
     usuario = Usuario.query.filter_by(nome=nome_usuario, tipo='publico').first()
     
+    # Usuário público não usa hash
     if usuario and usuario.senha == senha_publica: 
         session['logged_in'] = True
         session['user_id'] = usuario.id
@@ -212,6 +220,7 @@ def login_publico():
 
 @app.route('/logout')
 def logout():
+    """Encerra a sessão do usuário."""
     session.clear()
     flash('Você saiu do sistema.', 'info')
     return redirect(url_for('login'))
@@ -219,6 +228,7 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def admin_dashboard():
+    """Painel principal do administrador."""
     if session.get('user_type') == 'publico':
         return redirect(url_for('dashboard_publico'))
         
@@ -228,6 +238,7 @@ def admin_dashboard():
 @app.route('/dashboard_publico')
 @login_required
 def dashboard_publico():
+    """Painel de consulta pública."""
     if session.get('user_type') == 'admin':
         return redirect(url_for('admin_dashboard'))
         
@@ -239,6 +250,7 @@ def dashboard_publico():
 @app.route('/consulta_associado', methods=['POST'])
 @login_required
 def consulta_associado():
+    """Lógica de busca por associado no painel público."""
     termo = request.form.get('termo_busca', '').strip()
     config = Configuracao.query.all()
     config_dict = {c.chave: c.valor for c in config}
@@ -249,6 +261,7 @@ def consulta_associado():
     }
     
     if termo:
+        # Busca por Matrícula, Nome, Placa, RG ou CPF
         assoc = Associado.query.filter(
             or_(
                 Associado.matricula.ilike(f'%{termo}%'),
@@ -291,12 +304,14 @@ def consulta_associado():
 @login_required
 @admin_required
 def listar_associados():
+    """Lista todos os associados com status financeiro e dívida."""
     associados_raw = Associado.query.all()
     
     associados = []
     for assoc in associados_raw:
         meses_devidos, divida_total = get_meses_devidos(assoc.id)
         status_financeiro, status_class = get_status_financeiro_detalhado(assoc.id)
+        # Formatação de moeda BRL
         divida_formatada = f"R$ {'{:,.2f}'.format(divida_total).replace('.', 'X').replace(',', '.').replace('X', ',')}"
         
         associados.append({
@@ -316,6 +331,7 @@ def listar_associados():
 @login_required
 @admin_required
 def cadastrar_associado():
+    """Cria um novo registro de associado."""
     if request.method == 'POST':
         try:
             novo_assoc = Associado(
@@ -348,6 +364,7 @@ def cadastrar_associado():
 @login_required
 @admin_required
 def editar_associado(id):
+    """Edita os dados de um associado existente."""
     associado = Associado.query.get_or_404(id)
     
     if request.method == 'POST':
@@ -379,6 +396,7 @@ def editar_associado(id):
 @login_required
 @admin_required
 def remover_associado(id):
+    """Remove um associado e seu histórico financeiro."""
     associado = Associado.query.get_or_404(id)
     try:
         nome_removido = associado.nome
@@ -399,6 +417,7 @@ def remover_associado(id):
 @login_required
 @admin_required
 def gerenciar_mensalidades_web():
+    """Exibe a lista de associados com detalhes sobre dívidas e meses em atraso."""
     associados_raw = Associado.query.all()
     mensalidade_base = get_mensalidade_base()
     
@@ -427,6 +446,7 @@ def gerenciar_mensalidades_web():
 @login_required
 @admin_required
 def registrar_pagamento(associado_id):
+    """Registra ou remove um pagamento para um mês de referência específico."""
     associado = Associado.query.get_or_404(associado_id)
     mensalidade_base = get_mensalidade_base()
     
@@ -494,6 +514,7 @@ def registrar_pagamento(associado_id):
 @login_required
 @admin_required
 def gerenciar_despesas_web():
+    """Adiciona ou lista despesas."""
     if request.method == 'POST':
         try:
             valor = float(request.form['valor'])
@@ -524,6 +545,7 @@ def gerenciar_despesas_web():
 @login_required
 @admin_required
 def remover_despesa(despesa_id):
+    """Remove uma despesa do sistema."""
     despesa = Despesa.query.get_or_404(despesa_id)
     try:
         descricao = despesa.descricao
@@ -540,6 +562,7 @@ def remover_despesa(despesa_id):
 @login_required
 @admin_required
 def relatorios_web():
+    """Exibe um resumo financeiro e relatórios."""
     metrics = get_dash_metrics()
     saldo = metrics['total_receita'] - metrics['total_despesas']
     
@@ -559,8 +582,7 @@ def relatorios_web():
 @login_required
 @admin_required
 def criar_usuario_consulta_publica():
-    """Formulário e lógica para criar usuários de consulta pública."""
-    
+    """Gerencia a criação e listagem de usuários de consulta pública."""
     if request.method == 'POST':
         nome = request.form['nome']
         senha = request.form['senha']
@@ -595,6 +617,7 @@ def criar_usuario_consulta_publica():
 @login_required
 @admin_required
 def remover_usuario_publico(user_id):
+    """Remove um usuário de consulta pública."""
     usuario = Usuario.query.get_or_404(user_id)
     if usuario.tipo != 'publico':
         flash('Apenas usuários de consulta pública podem ser removidos por esta rota.', 'danger')
@@ -620,8 +643,8 @@ if __name__ == '__main__':
         # Setup de desenvolvimento local
         db.create_all() 
         
+        # Cria o admin apenas se não existir. Usa senha simples para consistência.
         if not Usuario.query.filter_by(email='acpamsal@gmail.com').first():
-            # A senha é salva sem hash para fins de debug local, espelhando o que faremos no Heroku
             novo_admin = Usuario(
                 email='acpamsal@gmail.com',
                 nome='Admin Principal',
