@@ -3,4 +3,4 @@ Flask-SQLAlchemy
 gunicorn
 python-dateutil
 Werkzeug
-psycopg2-binary  <-- ADICIONE ESTA LINHA
+psycopg2-binary
