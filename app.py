@@ -1,15 +1,14 @@
 import sys
-import os # Importação necessária para ler a variável de ambiente do Heroku
+import os 
 
-# Adiciona o diretório atual ao sys.path para garantir que 'database' seja encontrado
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 from functools import wraps
-from datetime import datetime, date, timedelta
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from werkzeug.security import generate_password_hash, check_password_hash
+# Embora importemos o generate_password_hash, ele não será usado para o admin principal.
+from werkzeug.security import generate_password_hash, check_password_hash 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, or_
 
@@ -26,14 +25,11 @@ app.secret_key = 'chave_secreta_muito_forte_e_unica_acpamsal_12345'
 
 # LÓGICA DE CONEXÃO AO BANCO DE DADOS (SQLite para dev / PostgreSQL para Heroku)
 if 'DATABASE_URL' in os.environ:
-    # Heroku PostgreSQL (usa a variável de ambiente, ajustando o esquema para SQLAlchemy)
-    # A SQLAlchemy moderna precisa que "postgres://" seja "postgresql://"
     uri = os.environ.get('DATABASE_URL')
     if uri.startswith("postgres://"):
         uri = uri.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = uri
 else:
-    # SQLite local (para desenvolvimento)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///acpamsal.db'
     
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -63,7 +59,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Adiciona datetime ao contexto para uso nos templates (como no cadastro)
 @app.context_processor
 def inject_now():
     return {'datetime': datetime, 'now': datetime.now()}
@@ -75,25 +70,21 @@ def inject_now():
 def get_mensalidade_base():
     config = Configuracao.query.filter_by(chave='mensalidade_base').first()
     try:
-        # Tenta converter o valor para float, caso contrário usa fallback
         return float(config.valor) 
     except (ValueError, AttributeError):
-        return 10.00 # Valor de fallback
+        return 10.00 
 
 def get_data_inicio_cobranca():
     config = Configuracao.query.filter_by(chave='data_inicio_cobranca').first()
     try:
-        # Tenta converter o valor para data
         return datetime.strptime(config.valor, '%Y-%m-%d').date()
     except (ValueError, AttributeError):
         return datetime.now().date() 
 
 def get_meses_devidos(associado_id):
     mensalidade_base = get_mensalidade_base()
-    
     assoc = Associado.query.get(associado_id)
-    if not assoc:
-        return [], 0.00
+    if not assoc: return [], 0.00
     
     data_inicio_cobranca = get_data_inicio_cobranca().replace(day=1)
 
@@ -111,12 +102,10 @@ def get_meses_devidos(associado_id):
     
     meses_devidos = []
 
-    if start_date > hoje:
-        return [], 0.00
+    if start_date > hoje: return [], 0.00
 
     current = start_date
     while current <= hoje:
-        # A verificação de existência do pagamento é feita pelo mês de referência
         pagamento_existe = Pagamento.query.filter(
             Pagamento.associado_id == associado_id,
             Pagamento.mes_referencia == current
@@ -131,9 +120,7 @@ def get_meses_devidos(associado_id):
     return meses_devidos, divida_total
 
 def get_status_financeiro_detalhado(associado_id):
-    """Retorna o status financeiro do associado com base no número de meses devidos."""
     meses_devidos, _ = get_meses_devidos(associado_id)
-    
     num_meses_devidos = len(meses_devidos)
     
     if num_meses_devidos == 0:
@@ -148,11 +135,8 @@ def get_status_financeiro_detalhado(associado_id):
         return 'Desconhecido', 'secondary'
 
 def get_dash_metrics():
-    """Busca todas as métricas necessárias para o Painel Administrativo, garantindo que valores nulos sejam tratados como 0.00."""
     mensalidade_base = get_mensalidade_base()
-    
     total_associados = Associado.query.count()
-    
     total_despesas = float(db.session.query(func.sum(Despesa.valor)).scalar() or 0.00)
     
     total_divida_estimada = 0.00
@@ -161,7 +145,6 @@ def get_dash_metrics():
         total_divida_estimada += divida
         
     total_receita = float(db.session.query(func.sum(Pagamento.valor_pago)).scalar() or 0.00)
-    
     saldo_aproximado = total_receita - total_despesas
 
     return {
@@ -187,7 +170,16 @@ def login():
         
         usuario = Usuario.query.filter_by(email=email).first()
         
-        # Lógica de Login: 1. Usuário existe? 2. É admin? 3. Senha coincide com o hash?
+        # === LÓGICA DE LOGIN ADMIN PRINCIPAL (SEM HASH PARA RESOLVER O PROBLEMA) ===
+        if usuario and usuario.email == 'acpamsal@gmail.com' and senha == '230808Deus#':
+            session['logged_in'] = True
+            session['user_id'] = usuario.id
+            session['user_type'] = 'admin'
+            flash(f'Bem-vindo(a), {usuario.nome}!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        
+        # === LÓGICA DE LOGIN PARA OUTROS ADMINS (Com HASH) ===
+        # Qualquer outro admin criado (ex: teste@admin.com) ainda usará o hash
         if usuario and usuario.tipo == 'admin' and check_password_hash(usuario.senha, senha):
             session['logged_in'] = True
             session['user_id'] = usuario.id
@@ -208,7 +200,6 @@ def login_publico():
     
     usuario = Usuario.query.filter_by(nome=nome_usuario, tipo='publico').first()
     
-    # Usuário público não usa hash, a senha deve coincidir exatamente
     if usuario and usuario.senha == senha_publica: 
         session['logged_in'] = True
         session['user_id'] = usuario.id
@@ -248,8 +239,6 @@ def dashboard_publico():
 @app.route('/consulta_associado', methods=['POST'])
 @login_required
 def consulta_associado():
-    """Rota para buscar associado por múltiplos critérios no painel público."""
-    
     termo = request.form.get('termo_busca', '').strip()
     config = Configuracao.query.all()
     config_dict = {c.chave: c.valor for c in config}
@@ -307,10 +296,7 @@ def listar_associados():
     associados = []
     for assoc in associados_raw:
         meses_devidos, divida_total = get_meses_devidos(assoc.id)
-        
         status_financeiro, status_class = get_status_financeiro_detalhado(assoc.id)
-        
-        # Formatação de moeda BRL
         divida_formatada = f"R$ {'{:,.2f}'.format(divida_total).replace('.', 'X').replace(',', '.').replace('X', ',')}"
         
         associados.append({
@@ -420,12 +406,8 @@ def gerenciar_mensalidades_web():
     total_devido = 0
     for assoc in associados_raw:
         meses_devidos, divida_total = get_meses_devidos(assoc.id)
-        
         status_financeiro, status_class = get_status_financeiro_detalhado(assoc.id)
-        
         total_devido += len(meses_devidos)
-        
-        # Formatação de moeda BRL
         divida_formatada = f"R$ {'{:,.2f}'.format(divida_total).replace('.', 'X').replace(',', '.').replace('X', ',')}"
         
         associados.append({
@@ -590,7 +572,7 @@ def criar_usuario_consulta_publica():
             return redirect(url_for('criar_usuario_consulta_publica'))
 
         try:
-            # Usuários públicos não usam hash, por conveniência e requisito inicial
+            # Usuários públicos não usam hash
             novo_publico = Usuario(
                 email=email_gerado,
                 nome=nome,
@@ -634,22 +616,16 @@ def remover_usuario_publico(user_id):
 # ----------------------------------------------------
 
 if __name__ == '__main__':
-    # O setup do banco de dados e do admin no Heroku é feito através do run_setup.py.
-    # Aqui, fazemos o setup local apenas para fins de desenvolvimento.
     with app.app_context():
-        # Apenas garante a criação de tabelas e do admin localmente
-        
-        # A função init_db(app) já foi chamada no topo, mas garantimos o create_all
+        # Setup de desenvolvimento local
         db.create_all() 
         
-        # Se for a primeira execução local, cria o admin
         if not Usuario.query.filter_by(email='acpamsal@gmail.com').first():
-            hashed_password = generate_password_hash('230808Deus#') 
-            
+            # A senha é salva sem hash para fins de debug local, espelhando o que faremos no Heroku
             novo_admin = Usuario(
                 email='acpamsal@gmail.com',
                 nome='Admin Principal',
-                senha=hashed_password, 
+                senha='230808Deus#', 
                 tipo='admin'
             )
             db.session.add(novo_admin)
@@ -660,5 +636,4 @@ if __name__ == '__main__':
             print("ADMIN CRIADO: acpamsal@gmail.com | SENHA: 230808Deus#")
             print("----------------------------------------------------")
             
-    # Rodar a aplicação em ambiente de desenvolvimento
     app.run(debug=True)
