@@ -1,16 +1,16 @@
 import sys
-import os
-# Adiciona o diretório atual ao sys.path para garantir que 'database' seja encontrado
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import os 
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 from functools import wraps
-from datetime import datetime, date, timedelta
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from werkzeug.security import generate_password_hash, check_password_hash
+# Embora importemos o generate_password_hash, ele não será usado para o admin principal.
+from werkzeug.security import generate_password_hash, check_password_hash 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 # Importar modelos do nosso arquivo database.py
 from database import init_db, db, Usuario, Associado, Pagamento, Despesa, Configuracao
@@ -22,6 +22,17 @@ from database import init_db, db, Usuario, Associado, Pagamento, Despesa, Config
 app = Flask(__name__)
 # MUDE ESTA CHAVE SECRETA EM PRODUÇÃO!
 app.secret_key = 'chave_secreta_muito_forte_e_unica_acpamsal_12345'
+
+# LÓGICA DE CONEXÃO AO BANCO DE DADOS (SQLite para dev / PostgreSQL para Heroku)
+if 'DATABASE_URL' in os.environ:
+    uri = os.environ.get('DATABASE_URL')
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = uri
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///acpamsal.db'
+    
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializa o banco de dados e cria as tabelas
 init_db(app)
@@ -48,7 +59,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Adiciona datetime ao contexto para uso nos templates (como no cadastro)
 @app.context_processor
 def inject_now():
     return {'datetime': datetime, 'now': datetime.now()}
@@ -60,36 +70,45 @@ def inject_now():
 def get_mensalidade_base():
     config = Configuracao.query.filter_by(chave='mensalidade_base').first()
     try:
-        return float(config.valor)
+        return float(config.valor) 
     except (ValueError, AttributeError):
-        return 100.00 
+        return 10.00 
+
+def get_data_inicio_cobranca():
+    config = Configuracao.query.filter_by(chave='data_inicio_cobranca').first()
+    try:
+        return datetime.strptime(config.valor, '%Y-%m-%d').date()
+    except (ValueError, AttributeError):
+        return datetime.now().date() 
 
 def get_meses_devidos(associado_id):
     mensalidade_base = get_mensalidade_base()
-    
     assoc = Associado.query.get(associado_id)
-    if not assoc:
-        return [], 0.00
+    if not assoc: return [], 0.00
+    
+    data_inicio_cobranca = get_data_inicio_cobranca().replace(day=1)
 
     ultimo_pagamento = Pagamento.query.filter_by(associado_id=associado_id).order_by(Pagamento.mes_referencia.desc()).first()
     
     if ultimo_pagamento:
         start_date = ultimo_pagamento.mes_referencia + relativedelta(months=1)
     else:
-        start_date = assoc.data_cadastro.replace(day=1)
+        start_date = data_inicio_cobranca
 
-    hoje = datetime.now().replace(day=1)
+    if start_date < data_inicio_cobranca:
+        start_date = data_inicio_cobranca
+
+    hoje = datetime.now().date().replace(day=1)
+    
     meses_devidos = []
 
-    if start_date.date() > hoje.date():
-        return [], 0.00
+    if start_date > hoje: return [], 0.00
 
     current = start_date
-    while current.date() <= hoje.date():
-        # Verifica se o pagamento para o mês/ano atual já existe
+    while current <= hoje:
         pagamento_existe = Pagamento.query.filter(
             Pagamento.associado_id == associado_id,
-            func.strftime('%Y-%m', Pagamento.mes_referencia) == current.strftime('%Y-%m')
+            Pagamento.mes_referencia == current
         ).first()
 
         if not pagamento_existe:
@@ -100,25 +119,32 @@ def get_meses_devidos(associado_id):
     divida_total = len(meses_devidos) * mensalidade_base
     return meses_devidos, divida_total
 
+def get_status_financeiro_detalhado(associado_id):
+    meses_devidos, _ = get_meses_devidos(associado_id)
+    num_meses_devidos = len(meses_devidos)
+    
+    if num_meses_devidos == 0:
+        return 'Ativo (em dias)', 'success'
+    elif num_meses_devidos <= 2:
+        return f'Atrasado ({num_meses_devidos} meses em atraso)', 'warning'
+    elif num_meses_devidos == 3:
+        return 'Inativo (3 meses em atraso)', 'info'
+    elif num_meses_devidos >= 4:
+        return 'Desligado (mais de 4 meses em atraso)', 'danger'
+    else:
+        return 'Desconhecido', 'secondary'
+
 def get_dash_metrics():
-    """Busca todas as métricas necessárias para o Painel Administrativo, garantindo que valores nulos sejam tratados como 0.00."""
     mensalidade_base = get_mensalidade_base()
-    
     total_associados = Associado.query.count()
-    
-    # Garante que, se o resultado da soma for None (sem despesas), ele use 0.00 e seja float
     total_despesas = float(db.session.query(func.sum(Despesa.valor)).scalar() or 0.00)
     
-    # 1. Calcular a dívida total (somatório da dívida de todos os associados)
     total_divida_estimada = 0.00
     for assoc in Associado.query.all():
         _, divida = get_meses_devidos(assoc.id)
         total_divida_estimada += divida
         
-    # 2. Calcular receita total
-    # Garante que, se o resultado da soma for None (sem pagamentos), ele use 0.00 e seja float
     total_receita = float(db.session.query(func.sum(Pagamento.valor_pago)).scalar() or 0.00)
-    
     saldo_aproximado = total_receita - total_despesas
 
     return {
@@ -144,6 +170,16 @@ def login():
         
         usuario = Usuario.query.filter_by(email=email).first()
         
+        # === LÓGICA DE LOGIN ADMIN PRINCIPAL (SEM HASH PARA RESOLVER O PROBLEMA) ===
+        if usuario and usuario.email == 'acpamsal@gmail.com' and senha == '230808Deus#':
+            session['logged_in'] = True
+            session['user_id'] = usuario.id
+            session['user_type'] = 'admin'
+            flash(f'Bem-vindo(a), {usuario.nome}!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        
+        # === LÓGICA DE LOGIN PARA OUTROS ADMINS (Com HASH) ===
+        # Qualquer outro admin criado (ex: teste@admin.com) ainda usará o hash
         if usuario and usuario.tipo == 'admin' and check_password_hash(usuario.senha, senha):
             session['logged_in'] = True
             session['user_id'] = usuario.id
@@ -198,7 +234,54 @@ def dashboard_publico():
     config = Configuracao.query.all()
     config_dict = {c.chave: c.valor for c in config}
     
-    return render_template('dashboard_publico.html', config=config_dict)
+    return render_template('dashboard_publico.html', config=config_dict, resultado_busca=None)
+
+@app.route('/consulta_associado', methods=['POST'])
+@login_required
+def consulta_associado():
+    termo = request.form.get('termo_busca', '').strip()
+    config = Configuracao.query.all()
+    config_dict = {c.chave: c.valor for c in config}
+    
+    resultado = {
+        'encontrado': False,
+        'mensagem': 'Nenhum associado encontrado com o termo fornecido.'
+    }
+    
+    if termo:
+        assoc = Associado.query.filter(
+            or_(
+                Associado.matricula.ilike(f'%{termo}%'),
+                Associado.nome.ilike(f'%{termo}%'),
+                Associado.placa.ilike(f'%{termo}%'),
+                Associado.rg.ilike(f'%{termo}%'),
+                Associado.cpf.ilike(f'%{termo}%')
+            )
+        ).first()
+
+        if assoc:
+            status_financeiro_completo, _ = get_status_financeiro_detalhado(assoc.id)
+            
+            if 'Ativo' in status_financeiro_completo:
+                status_final = 'ASSOCIADO ATIVO (EM DIAS)'
+                cor_status = 'success'
+            elif 'Desligado' in status_financeiro_completo or 'Inativo' in status_financeiro_completo:
+                status_final = 'ASSOCIADO INATIVO/DESLIGADO'
+                cor_status = 'danger'
+            else:
+                status_final = 'ASSOCIADO ATIVO (EM ATRASO)'
+                cor_status = 'warning'
+                
+            resultado = {
+                'encontrado': True,
+                'nome': assoc.nome,
+                'matricula': assoc.matricula,
+                'placa': assoc.placa,
+                'status_associacao': status_final,
+                'cor_status': cor_status
+            }
+        
+    return render_template('dashboard_publico.html', config=config_dict, resultado_busca=resultado)
 
 # ----------------------------------------------------
 # 5. ROTAS DE GERENCIAMENTO DE ASSOCIADOS (CRUD)
@@ -213,11 +296,7 @@ def listar_associados():
     associados = []
     for assoc in associados_raw:
         meses_devidos, divida_total = get_meses_devidos(assoc.id)
-        
-        status = 'Ativo'
-        if divida_total > 0:
-            status = 'Inadimplente'
-        
+        status_financeiro, status_class = get_status_financeiro_detalhado(assoc.id)
         divida_formatada = f"R$ {'{:,.2f}'.format(divida_total).replace('.', 'X').replace(',', '.').replace('X', ',')}"
         
         associados.append({
@@ -225,7 +304,8 @@ def listar_associados():
             'matricula': assoc.matricula,
             'nome': assoc.nome,
             'placa': assoc.placa,
-            'status': status,
+            'status': status_financeiro,
+            'status_class': status_class,
             'divida': divida_formatada,
             'total_devido': len(meses_devidos)
         })
@@ -326,19 +406,16 @@ def gerenciar_mensalidades_web():
     total_devido = 0
     for assoc in associados_raw:
         meses_devidos, divida_total = get_meses_devidos(assoc.id)
-        
-        status = 'Em Dia'
-        if divida_total > 0:
-            status = 'Em Atraso'
-            total_devido += len(meses_devidos)
-        
+        status_financeiro, status_class = get_status_financeiro_detalhado(assoc.id)
+        total_devido += len(meses_devidos)
         divida_formatada = f"R$ {'{:,.2f}'.format(divida_total).replace('.', 'X').replace(',', '.').replace('X', ',')}"
         
         associados.append({
             'id': assoc.id,
             'matricula': assoc.matricula,
             'nome': assoc.nome,
-            'status': status,
+            'status': status_financeiro,
+            'status_class': status_class,
             'divida': divida_formatada,
             'total_devido': len(meses_devidos),
             'meses_devidos': meses_devidos
@@ -358,12 +435,12 @@ def registrar_pagamento(associado_id):
         acao = request.form.get('acao')
         
         try:
-            mes_referencia = datetime.strptime(mes_ano_str, '%Y-%m').date()
+            mes_referencia = datetime.strptime(mes_ano_str, '%Y-%m').date().replace(day=1)
             
             if acao == 'registrar':
                 pagamento_existente = Pagamento.query.filter(
                     Pagamento.associado_id == associado_id,
-                    func.strftime('%Y-%m', Pagamento.mes_referencia) == mes_ano_str
+                    Pagamento.mes_referencia == mes_referencia
                 ).first()
                 
                 if pagamento_existente:
@@ -381,7 +458,7 @@ def registrar_pagamento(associado_id):
             elif acao == 'remover':
                 pagamento_remover = Pagamento.query.filter(
                     Pagamento.associado_id == associado_id,
-                    func.strftime('%Y-%m', Pagamento.mes_referencia) == mes_ano_str
+                    Pagamento.mes_referencia == mes_referencia
                 ).first()
                 
                 if pagamento_remover:
@@ -392,7 +469,7 @@ def registrar_pagamento(associado_id):
                     flash(f'Nenhum pagamento encontrado para {mes_referencia.strftime("%B/%Y")}.', 'warning')
                     
         except ValueError:
-            flash('Formato de mês inválido.', 'danger')
+            flash('Formato de mês inválido. Use AAAA-MM.', 'danger')
         except Exception as e:
             db.session.rollback()
             flash(f'Erro na operação: {e}', 'danger')
@@ -401,14 +478,18 @@ def registrar_pagamento(associado_id):
 
     meses_devidos_lista, _ = get_meses_devidos(associado_id)
     
+    historico_pagamentos = Pagamento.query.filter_by(associado_id=associado_id).order_by(Pagamento.mes_referencia.desc()).all()
+    
     return render_template(
         'registrar_pagamento.html', 
         associado=associado, 
         associado_id=associado_id, 
         mensalidade_base=mensalidade_base,
-        meses_devidos_lista=meses_devidos_lista
+        meses_devidos_lista=meses_devidos_lista,
+        historico_pagamentos=historico_pagamentos
     )
-    
+
+
 @app.route('/despesas', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -486,13 +567,12 @@ def criar_usuario_consulta_publica():
         
         email_gerado = f'{nome.lower().replace(" ", "")}@publico.com'
         
-        # Validar se o nome de usuário ou email já existe
         if Usuario.query.filter_by(nome=nome, tipo='publico').first() or Usuario.query.filter_by(email=email_gerado).first():
             flash('Erro: Já existe um usuário de consulta pública com este nome ou o e-mail gerado.', 'danger')
             return redirect(url_for('criar_usuario_consulta_publica'))
 
         try:
-            # Usuário público tem a senha armazenada como texto simples
+            # Usuários públicos não usam hash
             novo_publico = Usuario(
                 email=email_gerado,
                 nome=nome,
@@ -532,30 +612,27 @@ def remover_usuario_publico(user_id):
     return redirect(url_for('criar_usuario_consulta_publica'))
 
 # ----------------------------------------------------
-# 8. INICIALIZAÇÃO E ADMIN DEFAULT
+# 8. INICIALIZAÇÃO
 # ----------------------------------------------------
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all() é chamado dentro de init_db
+        # Setup de desenvolvimento local
+        db.create_all() 
         
-        # CRIAÇÃO DO USUÁRIO ADMINISTRADOR PADRÃO (CREDENCIAIS SOLICITADAS)
-        # Email: acpamsal@gmail.com | Senha: 230808Deus#
         if not Usuario.query.filter_by(email='acpamsal@gmail.com').first():
-            # Gera o hash da senha solicitada
-            hashed_password = generate_password_hash('230808Deus#') 
-            
+            # A senha é salva sem hash para fins de debug local, espelhando o que faremos no Heroku
             novo_admin = Usuario(
                 email='acpamsal@gmail.com',
                 nome='Admin Principal',
-                senha=hashed_password, 
+                senha='230808Deus#', 
                 tipo='admin'
             )
             db.session.add(novo_admin)
             db.session.commit()
             
             print("----------------------------------------------------")
-            print("🚀 SETUP CONCLUÍDO!")
+            print("🚀 SETUP LOCAL CONCLUÍDO!")
             print("ADMIN CRIADO: acpamsal@gmail.com | SENHA: 230808Deus#")
             print("----------------------------------------------------")
             
