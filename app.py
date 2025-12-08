@@ -687,7 +687,9 @@ def config_web():
 
 # --- EXECUÇÃO ---
 
-with app.app_context():
+# ... Código do Banco de Dados, db = SQLAlchemy(app), etc.
+
+# ... Rotas e Funções
 
 if __name__ == '__main__':
     app.run(debug=True)
