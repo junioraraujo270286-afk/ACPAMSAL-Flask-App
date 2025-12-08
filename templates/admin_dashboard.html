@@ -1,79 +1,51 @@
 {% extends "base.html" %}
-
-{% block title %}Admin Dashboard{% endblock %}
-
-{% block page_header %}Painel Administrativo - Visão Geral{% endblock %}
-
+{% block title %}Dashboard Admin{% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-primary shadow">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Associados Cadastrados</h5>
-                        <h1 class="display-4">{{ "{:,.0f}".format(total_associados).replace(",", ".") }}</h1>
-                    </div>
-                    <i class="bi bi-person-lines-fill display-4"></i>
-                </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('listar_associados') }}" class="text-white text-decoration-none">Ver Detalhes <i class="bi bi-arrow-right-circle-fill"></i></a>
-            </div>
-        </div>
-    </div>
+<h2>🏠 Resumo Administrativo</h2>
+<hr>
 
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-warning shadow">
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Dívida Total Estimada</h5>
-                        <h1 class="display-4">R$ {{ "{:,.2f}".format(total_divida).replace(",", "X").replace(".", ",").replace("X", ".") }}</h1>
-                    </div>
-                    <i class="bi bi-currency-dollar display-4"></i>
-                </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('gerenciar_mensalidades_web') }}" class="text-white text-decoration-none">Gerenciar Mensalidades <i class="bi bi-arrow-right-circle-fill"></i></a>
+                <h5 class="card-title">Associados</h5>
+                <p class="card-text fs-3">{{ total_associados }}</p>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-danger shadow">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Despesas Registradas</h5>
-                        <h1 class="display-4">R$ {{ "{:,.2f}".format(total_despesas).replace(",", "X").replace(".", ",").replace("X", ".") }}</h1>
-                    </div>
-                    <i class="bi bi-receipt display-4"></i>
-                </div>
+                <h5 class="card-title">Receitas (Mensalidades)</h5>
+                <p class="card-text fs-3">R$ {{ "{:,.2f}".format(total_mensalidades) }}</p>
             </div>
-            <div class="card-footer">
-                <a href="{{ url_for('gerenciar_despesas_web') }}" class="text-white text-decoration-none">Ver Despesas <i class="bi bi-arrow-right-circle-fill"></i></a>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Dívida Total Estimada</h5>
+                <p class="card-text fs-3">R$ {{ "{:,.2f}".format(total_divida) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Despesas Registradas</h5>
+                <p class="card-text fs-3">R$ {{ "{:,.2f}".format(total_despesas) }}</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card text-dark bg-light shadow">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-arrow-up-circle-fill text-success"></i> Receita Total (Pagamentos)</h5>
-                <p class="card-text fs-2">R$ {{ "{:,.2f}".format(total_receita).replace(",", "X").replace(".", ",").replace("X", ".") }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card text-white bg-{{ 'success' if saldo_aproximado >= 0 else 'danger' }} shadow">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-funnel-fill"></i> Saldo Estimado (Receita - Despesa)</h5>
-                <p class="card-text fs-2">R$ {{ "{:,.2f}".format(saldo_aproximado).replace(",", "X").replace(".", ",").replace("X", ".") }}</p>
-            </div>
-        </div>
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Saldo (Receitas - Despesas)</h5>
+        <p class="card-text fs-2 fw-bold text-{{ 'success' if saldo >= 0 else 'danger' }}">
+            R$ {{ "{:,.2f}".format(saldo) }}
+        </p>
+        <p class="card-text text-muted">Acompanhe seus relatórios detalhados nos menus laterais.</p>
     </div>
 </div>
 

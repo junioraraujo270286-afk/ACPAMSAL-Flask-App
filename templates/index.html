@@ -1,98 +1,132 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-# Importações necessárias do seu módulo de banco de dados
-from database import init_db, db, Usuario, Associado, Pagamento, Despesa, Configuracao
+<!DOCTYPE html>
 
-# --- Extensões Comumente Usadas (Remova ou Descomente Conforme Necessário) ---
-# from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-# from flask_bcrypt import Bcrypt
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACPAMSAL - Dashboard</title>
+<!-- Inclui Tailwind CSS para estilização moderna e responsiva -->
+<script src="https://www.google.com/search?q=https://cdn.tailwindcss.com"></script>
+<style>
+/* Define a fonte Inter como padrão */
+body { font-family: 'Inter', sans-serif; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
 
-# Inicialização de Extensões (Deixe-as fora da função 'create_app' para evitar importações circulares)
-# login_manager = LoginManager()
-# bcrypt = Bcrypt()
-# -----------------------------------------------------------------------------
+<!-- Barra de Navegação Simples (Header) -->
+<nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex">
+                <div class="flex-shrink-0 flex items-center">
+                    <span class="text-xl font-bold text-blue-600">ACPAMSAL</span>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                    <a href="{{ url_for('index') }}" class="border-b-2 border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">Dashboard</a>
+                    <a href="{{ url_for('lista_associados') }}" class="border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">Associados</a>
+                    <a href="#" class="border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">Financeiro</a>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <a href="{{ url_for('logout') }}" class="ml-4 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">Sair</a>
+            </div>
+        </div>
+    </div>
+</nav>
 
-def create_app():
-    """
-    Cria e configura a instância principal do aplicativo Flask.
-    Este padrão ajuda a gerenciar configurações e evitar importações circulares.
-    """
-    app = Flask(__name__)
+<!-- Conteúdo Principal -->
+<main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Dashboard Administrativo</h1>
     
-    # --- Configurações da Aplicação ---
-    
-    # Chave Secreta: ESSENCIAL para sessões, mensagens flash e segurança.
-    # MUDAR ISSO em produção!
-    app.config['SECRET_KEY'] = 'SUA_CHAVE_SECRETA_MUITO_SEGURA_E_ALEATORIA'  
-    
-    # Configuração do Banco de Dados SQLAlchemy
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///projeto.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    <!-- Mensagens Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="space-y-4 mb-6">
+            {% for category, message in messages %}
+                <div class="rounded-lg p-4 {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'warning' %}bg-yellow-100 text-yellow-700{% else %}bg-green-100 text-green-700{% endif %} shadow-md" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-    # --- Inicialização de Extensões ---
-    
-    # Inicializa o Flask-SQLAlchemy (o objeto 'db') com o app
-    # A função init_db() lida com db.init_app(app) e db.create_all()
-    init_db(app)
-
-    # Inicialização de outras extensões, se usadas
-    # login_manager.init_app(app)
-    # login_manager.login_view = 'login' # Define a view para login_required
-    # bcrypt.init_app(app)
-    
-    # -----------------------------------------------------------------
-    # --- Rotas da Aplicação ---
-    # -----------------------------------------------------------------
-
-    @app.route('/')
-    def index():
-        """Rota da página inicial."""
-        # Exemplo de como consultar dados do banco de dados após a inicialização
-        try:
-            with app.app_context():
-                total_associados = db.session.query(Associado).count()
-        except Exception as e:
-            # Em caso de erro (ex: banco ainda não criado)
-            total_associados = 0
-            
-        # Renderiza o template index.html (você precisará criar este arquivo)
-        return render_template('index.html', total_associados=total_associados)
-
-    @app.route('/associados')
-    # @login_required # Adicionar se estiver usando Flask-Login
-    def lista_associados():
-        """Rota para listar todos os associados."""
-        with app.app_context():
-            # Busca todos os registros de Associado
-            associados = Associado.query.order_by(Associado.nome).all()
+    <!-- Cards de Métricas -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         
-        # Você precisará de um template chamado 'lista_associados.html'
-        return render_template('lista_associados.html', associados=associados)
+        <!-- Card 1: Total de Associados -->
+        <div class="bg-white overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-full p-3 text-blue-600">
+                        <!-- Icone de Usuários (SVG) -->
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-2m2 0h-2m-10.356-1.857A3 3 0 005 18v2m0 0h2m0 0h-2m10.356-1.857a3 3 0 00-5.356 0M4 10h16M4 14h16m-5-4V6a2 2 0 00-2-2H9a2 2 0 00-2 2v4m3 0v4m0-4h4m-4 0h4m-2 4a3 3 0 01-6 0"></path></svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total de Associados</dt>
+                        <dd class="mt-1 flex items-baseline">
+                            <div class="text-2xl font-semibold text-gray-900">
+                                {{ total_associados }}
+                            </div>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3 text-sm">
+                <a href="{{ url_for('lista_associados') }}" class="text-blue-600 hover:text-blue-900 font-medium">Ver todos</a>
+            </div>
+        </div>
 
-    @app.route('/login', methods=['GET', 'POST'])
-    def login():
-        """Rota de Login (Esboço)."""
-        # Implemente sua lógica de formulário de login aqui
-        # if request.method == 'POST': ...
-        return "Página de Login (Implementar Formulário)"
+        <!-- Card 2: Receita Total (Pagamentos) -->
+        <div class="bg-white overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 rounded-full p-3 text-green-600">
+                        <!-- Icone de Dinheiro (SVG) -->
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4 .915-4 2s1.515 2 4 2c2.485 0 4-.915 4-2s-1.515-2-4-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18c-2.485 0-4 .915-4 2s1.515 2 4 2c2.485 0 4-.915 4-2s-1.515-2-4-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a4 4 0 00-4 4v.5"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 6.5V6a4 4 0 00-4-4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 17.5V18a4 4 0 01-4 4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17.5V18a4 4 0 014-4"></path></svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Receita Total (Exemplo)</dt>
+                        <dd class="mt-1 flex items-baseline">
+                            <div class="text-2xl font-semibold text-gray-900">
+                                R$ {{ "%.2f" | format(total_pagamentos) }}
+                            </div>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3 text-sm">
+                <a href="#" class="text-green-600 hover:text-green-900 font-medium">Detalhes dos Pagamentos</a>
+            </div>
+        </div>
+        
+        <!-- Card 3: Despesas Recentes (Placeholder) -->
+        <div class="bg-white overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-red-100 rounded-full p-3 text-red-600">
+                        <!-- Icone de Despesa (SVG) -->
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 4h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Despesas no Mês</dt>
+                        <dd class="mt-1 flex items-baseline">
+                            <div class="text-2xl font-semibold text-gray-900">
+                                R$ 0.00
+                            </div>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3 text-sm">
+                <a href="#" class="text-red-600 hover:text-red-900 font-medium">Gerenciar Despesas</a>
+            </div>
+        </div>
+    </div>
 
-    @app.route('/logout')
-    # @login_required
-    def logout():
-        """Rota para Logout (Esboço)."""
-        # logout_user()
-        # flash('Você foi desconectado.', 'success')
-        return redirect(url_for('index'))
+</main>
 
-    # Adicione suas rotas para Pagamento, Despesa e outras funcionalidades aqui...
 
-    return app
-
-# -----------------------------------------------------------------------------
-# Ponto de Entrada para Execução Local (python app.py) ou com Flask/Gunicorn
-# -----------------------------------------------------------------------------
-
-app = create_app()
-
-if __name__ == '__main__':
-    # Roda a aplicação no modo debug, útil para desenvolvimento
-    app.run(debug=True)
+</body>
+</html>

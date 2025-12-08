@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Criar Usuário Público{% endblock %}
+{% block content %}
+<h2>➕ Criar Novo Usuário de Consulta Pública</h2>
+<hr>
+<form method="POST" action="{{ url_for('cadastrar_usuario_publico') }}">
+    <div class="mb-3">
+        <label for="usuario" class="form-label">Nome de Usuário (Login)</label>
+        <input type="text" class="form-control" id="usuario" name="usuario" required>
+        <div class="form-text">Este deve ser o login exato que o usuário usará na tela inicial.</div>
+    </div>
+    <div class="mb-3">
+        <label for="senha" class="form-label">Senha</label>
+        <input type="password" class="form-control" id="senha" name="senha" required>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Criar Usuário</button>
+    <a href="{{ url_for('gerenciar_usuarios_publicos') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

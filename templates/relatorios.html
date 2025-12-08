@@ -1,75 +1,156 @@
 {% extends "base.html" %}
-
-{% block title %}Relatórios e Resumos{% endblock %}
-
-{% block page_header %}Relatórios e Resumos Financeiros{% endblock %}
-
+{% block title %}Relatório Financeiro e Associados{% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-success shadow">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Receita Total (Pagamentos)</h5>
-                        <h1 class="display-5">R$ {{ "{:,.2f}".format(total_receita).replace(",", "X").replace(".", ",").replace("X", ".") }}</h1>
-                    </div>
-                    <i class="bi bi-arrow-down-circle-fill display-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-danger shadow">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Despesas Totais</h5>
-                        <h1 class="display-5">R$ {{ "{:,.2f}".format(total_despesas).replace(",", "X").replace(".", ",").replace("X", ".") }}</h1>
-                    </div>
-                    <i class="bi bi-arrow-up-circle-fill display-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+<h2 class="text-secondary">📊 Relatório Financeiro e de Associados</h2>
+<p class="text-muted">Gerado em: **{{ data_geracao }}**</p>
+<hr class="print-none">
 
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-{{ 'primary' if saldo >= 0 else 'warning' }} shadow">
+<div class="d-flex justify-content-between mb-4 print-none">
+    <h4>Resumo Geral</h4>
+    <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Imprimir/Gerar PDF</button>
+</div>
+
+<style>
+    @media print {
+        /* Oculta elementos de navegação e botões */
+        .print-none, header, footer {
+            display: none !important;
+        }
+        .container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Estilo do CABEÇALHO de impressão - CENTRALIZADO e DIMINUÍDO */
+        .print-header {
+            display: block;
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .print-header img {
+            height: 50px; /* Logo menor */
+            margin-bottom: 5px;
+        }
+        .print-header h1 {
+            font-size: 1.1em; /* Nome da Associação (Diminuído) */
+            margin: 0;
+            font-weight: bold;
+        }
+        .print-header p {
+            margin: 2px 0;
+            font-size: 0.85em; /* CNPJ e Data de Geração (Diminuído) */
+        }
+        
+        /* Redução da Fonte no Resumo Financeiro */
+        .card-title {
+            font-size: 0.85em !important; 
+        }
+        .card-text {
+            font-size: 1.1em !important; /* Valor numérico reduzido */
+        }
+
+        /* Detalhamento dos Associados (Tabela) */
+        .table-responsive table {
+            font-size: 0.8em !important; /* Fonte bem pequena para a tabela */
+        }
+
+        /* Estilo do RODAPÉ de impressão */
+        .print-footer {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+            font-size: 0.75em; /* Fonte do rodapé menor */
+            text-align: center;
+            position: fixed; 
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #fff; 
+        }
+    }
+</style>
+
+<div class="print-header d-none d-print-block">
+    {% if config.logo_url %}
+        <img src="{{ config.logo_url }}" alt="Logo" class="print-logo">
+    {% endif %}
+    <h1>{{ config.nome_assoc }}</h1>
+    <p>CNPJ: {{ config.cnpj }}</p>
+    <p>Relatório Financeiro e de Associados | Gerado em: {{ data_geracao }}</p>
+</div>
+<h4 class="mb-3">Resumo Financeiro</h4>
+
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Saldo (Receita - Despesa)</h5>
-                        <h1 class="display-5">R$ {{ "{:,.2f}".format(saldo).replace(",", "X").replace(".", ",").replace("X", ".") }}</h1>
-                    </div>
-                    <i class="bi bi-funnel-fill display-4"></i>
-                </div>
+                <h5 class="card-title">Total Recebido</h5>
+                <p class="card-text fs-3">R$ {{ "{:,.2f}".format(total_pago_geral) }}</p>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-info shadow">
+    <div class="col-md-4">
+        <div class="card text-white bg-danger mb-3">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Dívida Total em Aberto</h5>
-                        <h1 class="display-5">R$ {{ "{:,.2f}".format(total_divida).replace(",", "X").replace(".", ",").replace("X", ".") }}</h1>
-                    </div>
-                    <i class="bi bi-currency-exchange display-4"></i>
-                </div>
+                <h5 class="card-title">Débito Pendente</h5>
+                <p class="card-text fs-3">R$ {{ "{:,.2f}".format(total_divida_geral) }}</p>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-secondary shadow">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
             <div class="card-body">
-                <h5 class="card-title">Relatório de Associados</h5>
-                <p class="card-text">Lista de todos os associados com status e débitos detalhados.</p>
-                <a href="{{ url_for('listar_associados') }}" class="btn btn-light"><i class="bi bi-file-earmark-bar-graph-fill"></i> Visualizar/Exportar</a>
+                <h5 class="card-title">Balanço (Aprox.)</h5>
+                <p class="card-text fs-3">R$ N/D</p> 
             </div>
         </div>
     </div>
 </div>
+<h4>Detalhamento dos Associados</h4>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-sm table-hover" style="font-size: 0.9em;">
+        <thead class="table-dark">
+            <tr>
+                <th>Matrícula</th>
+                <th>Nome</th>
+                <th>Placa</th>
+                <th>Status</th>
+                <th>Meses Devidos</th>
+                <th>Dívida (R$)</th>
+                <th>Pagamentos Feitos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in relatorio %}
+            <tr>
+                <td>{{ item.matricula }}</td>
+                <td>{{ item.nome }}</td>
+                <td>{{ item.placa }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if 'Em Dia' in item.status else 'danger' if 'Desligado' in item.status else 'warning' }}">
+                        {{ item.status }}
+                    </span>
+                </td>
+                <td>{{ item.meses_devidos }}</td>
+                <td>R$ {{ "{:,.2f}".format(item.divida) }}</td>
+                <td>{{ item.pagamentos_feitos }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="print-footer d-none d-print-block">
+    <p>
+        {{ footer_info.endereco_completo }}.
+        <br>
+        {{ footer_info.contato }}
+        <br>
+        {{ footer_info.social }}
+    </p></div>
 {% endblock %}

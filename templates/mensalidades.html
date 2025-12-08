@@ -1,22 +1,18 @@
 {% extends "base.html" %}
-
 {% block title %}Gerenciar Mensalidades{% endblock %}
-
-{% block page_header %}Gerenciamento de Mensalidades (Base: R$ {{ "{:,.2f}".format(mensalidade_base).replace(",", "X").replace(".", ",").replace("X", ".") }}){% endblock %}
-
 {% block content %}
-<div class="alert alert-info">
-    Clique no botão "Pagar/Ver Dívida" para registrar ou remover pagamentos de meses específicos.
-</div>
+<h2 class="text-secondary">💰 Gerenciar Mensalidades</h2>
+<p class="text-muted">Controle de pagamentos dos associados. Mensalidade base: **R$ {{ "{:,.2f}".format(mensalidade_base) }}**</p>
+<hr>
 
 <div class="table-responsive">
     <table class="table table-striped table-hover align-middle">
-        <thead class="table-dark">
+        <thead>
             <tr>
                 <th>Matrícula</th>
                 <th>Nome</th>
                 <th>Status</th>
-                <th>M. Devidos ({{ total_devido }})</th>
+                <th>Débito (Meses)</th>
                 <th>Dívida Total</th>
                 <th>Ações</th>
             </tr>
@@ -27,30 +23,91 @@
                 <td>{{ assoc.matricula }}</td>
                 <td>{{ assoc.nome }}</td>
                 <td>
-                    <span class="badge bg-{{ 'success' if 'Ativo' in assoc.status else ('warning' if 'Inativo' in assoc.status else 'danger') }}">
+                    <span class="badge bg-{{ 'success' if 'Em Dia' in assoc.status else 'danger' if 'Desligado' in assoc.status else 'warning' }}">
                         {{ assoc.status }}
                     </span>
                 </td>
                 <td>
-                    {% if assoc.meses_devidos %}
-                        <span class="badge bg-danger">{{ assoc.total_devido }} Meses</span>
-                    {% else %}
-                        <span class="badge bg-success">0 Meses</span>
-                    {% endif %}
+                    <span class="badge bg-{{ 'danger' if assoc.total_devido > 0 else 'success' }}">
+                        {{ assoc.total_devido }}
+                    </span>
                 </td>
+                <td>{{ assoc.divida }}</td>
                 <td>
-                    <strong class="text-{{ 'success' if assoc.divida == 'R$ 0.00' else 'danger' }}">{{ assoc.divida }}</strong>
+                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#modalPagamento{{ assoc.id }}">
+                        Gerenciar
+                    </button>
                 </td>
-                <td>
-                    <a href="{{ url_for('registrar_pagamento', associado_id=assoc.id) }}" class="btn btn-sm btn-primary" title="Registrar Pagamento"><i class="bi bi-cash-coin"></i> Pagar/Ver Dívida</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" class="text-center">Nenhum associado encontrado.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+{% for assoc in associados %}
+<div class="modal fade" id="modalPagamento{{ assoc.id }}" tabindex="-1" aria-labelledby="modalPagamentoLabel{{ assoc.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="modalPagamentoLabel{{ assoc.id }}">Gerenciar Pagamentos: {{ assoc.nome }} (Mat.: {{ assoc.matricula }})</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Dívida Total:</strong> <span class="text-danger">{{ assoc.divida }}</span> ({{ assoc.total_devido }} meses)</p>
+                <hr>
+                
+                <h6 class="text-primary">Meses Pendentes</h6>
+                <div class="mb-3">
+                    {% if assoc.meses_devidos %}
+                        {% for mes_devido in assoc.meses_devidos %}
+                            <form action="{{ url_for('gerenciar_mensalidades_web') }}" method="POST" style="display:inline; margin-right: 10px;">
+                                <input type="hidden" name="associado_id" value="{{ assoc.id }}">
+                                <input type="hidden" name="mes_ano" value="{{ mes_devido }}">
+                                <input type="hidden" name="acao" value="registrar">
+                                <button type="submit" class="btn btn-sm btn-outline-danger mb-2" title="Registrar pagamento de {{ mes_devido }}">
+                                    PAGAR: {{ mes_devido }} (R$ {{ "{:,.2f}".format(mensalidade_base) }})
+                                </button>
+                            </form>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-success">Nenhum débito pendente!</p>
+                    {% endif %}
+                </div>
+
+                <hr>
+
+                <h6 class="text-primary">Registrar ou Remover Pagamento (Manual)</h6>
+                <form action="{{ url_for('gerenciar_mensalidades_web') }}" method="POST" class="row g-3">
+                    <input type="hidden" name="associado_id" value="{{ assoc.id }}">
+                    
+                    <div class="col-md-5">
+                        <label for="mesAno{{ assoc.id }}" class="form-label">Mês/Ano de Referência</label>
+                        <select class="form-select" id="mesAno{{ assoc.id }}" name="mes_ano" required>
+                            <option value="">Selecione o Mês</option>
+                            {% for mes in meses_disponiveis %}
+                            <option value="{{ mes }}">{{ mes }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Ação</label>
+                        <select class="form-select" name="acao" required>
+                            <option value="registrar">Registrar Pagamento</option>
+                            <option value="remover">Remover Pagamento</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Executar Ação</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}
