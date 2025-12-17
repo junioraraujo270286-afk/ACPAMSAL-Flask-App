@@ -13,7 +13,7 @@
 <div class="row">
     <div class="col-md-3 mb-4 text-center">
         {% if associado.foto_base64 %}
-            <img src="{{ associado.foto_base64 }}" alt="Foto do Associado" class="img-fluid rounded-circle shadow" style="width: 150px; height: 150px; object-fit: cover;">
+            <img src="{{ url_for('serve_file', filename=associado.foto_perfil) if associado.foto_perfil else 'https://via.placeholder.com/150' }}" class="img-fluid rounded">
         {% else %}
             <i class="fas fa-user-circle fa-7x text-secondary"></i>
         {% endif %}
