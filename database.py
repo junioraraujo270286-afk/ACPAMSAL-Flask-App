@@ -10,7 +10,6 @@ def init_db(app):
     db.init_app(app)
     # Abre o contexto da aplicação para garantir que o SQLAlchemy possa criar as tabelas
     with app.app_context():
-        db.create_all()
 
 # ----------------------------------------------------------------------
 # Definição dos Modelos (Classes)
