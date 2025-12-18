@@ -15,13 +15,11 @@ app.secret_key = "acpamsal_gestao_2026_top_secret"
 
 # --- CONFIGURAÇÃO DE AMBIENTE ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-# Uso de SQLite (Importante: No Render Free, os dados resetam a cada deploy/restart)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'acpamsal_gestao.db')
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Garante que a pasta de uploads exista
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
+if not os.path.exists(app.config['UPLOAD_FOLDER']): 
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db = SQLAlchemy(app)
@@ -63,8 +61,7 @@ class Usuario(db.Model):
 # --- INJEÇÃO DE GLOBAIS ---
 @app.context_processor
 def inject_globals():
-    conf = Configuracao.query.first()
-    return dict(config=conf)
+    return dict(config=Configuracao.query.first())
 
 # --- LÓGICA DE NEGÓCIO: BLOQUEIO POR INADIMPLÊNCIA ---
 def atualizar_status_socios():
@@ -78,12 +75,11 @@ def atualizar_status_socios():
 # --- ROTAS DE ACESSO ---
 @app.route('/')
 def index():
-    return render_template('index.html') # Consulta Pública de Blitz
+    return render_template('index.html') # Consulta Pública
 
 @app.route('/login_admin', methods=['GET', 'POST'])
 def login_admin():
     if request.method == 'POST':
-        # Credenciais conforme sua instrução
         if request.form['user'] == "acpamsal@gmail.com" and request.form['pass'] == "230808Deus#":
             session['admin'] = True
             flash("Autenticação Administrativa Concluída.")
@@ -106,12 +102,12 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# --- CONSULTA PÚBLICA (FISCALIZAÇÃO EM BLITZ) ---
+# --- CONSULTA PÚBLICA (FISCALIZAÇÃO) ---
 @app.route('/consulta_publica', methods=['POST'])
 def consulta_publica():
     atualizar_status_socios()
     t = request.form.get('busca', '').upper()
-    # Apenas sócios ATIVOS aparecem como regulares na consulta pública
+    # Apenas sócios ATIVOS aparecem na consulta pública
     res = Associado.query.filter(
         (Associado.status == "ATIVO"),
         (Associado.matricula == t) | (Associado.nome.like(f"%{t}%")) | (Associado.placa == t)
@@ -130,8 +126,7 @@ def admin_cadastrar():
     if request.method == 'POST':
         foto = request.files.get('foto')
         filename = secure_filename(f"{uuid.uuid4().hex}.jpg") if foto else None
-        if foto: 
-            foto.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        if foto: foto.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         
         novo = Associado(
             foto=filename, 
@@ -170,6 +165,22 @@ def baixar_pagamento(id):
     flash(f"Pagamento confirmado para {m.socio.nome}.")
     return redirect(url_for('admin_mensalidades'))
 
+@app.route('/admin/usuarios', methods=['GET', 'POST'])
+def admin_usuarios():
+    if not session.get('admin'): return redirect(url_for('login_admin'))
+    if request.method == 'POST':
+        u = Usuario(username=request.form['user'], password=request.form['pass'], tipo=request.form['tipo'])
+        db.session.add(u); db.session.commit()
+        flash("Novo usuário de sistema criado.")
+    return render_template('admin_usuarios.html', usuarios=Usuario.query.all())
+
+@app.route('/admin/usuario/deletar/<int:id>')
+def deletar_usuario(id):
+    if not session.get('admin'): return redirect(url_for('login_admin'))
+    u = Usuario.query.get(id)
+    if u: db.session.delete(u); db.session.commit()
+    return redirect(url_for('admin_usuarios'))
+
 @app.route('/admin/config', methods=['GET', 'POST'])
 def admin_config():
     if not session.get('admin'): return redirect(url_for('login_admin'))
@@ -204,8 +215,8 @@ def gerar_cracha(id):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=(54*mm, 86*mm))
     
-    # Fundo e Borda Estilo Cartão
-    c.setFillColor(colors.HexColor("#1a1a1a")); c.rect(0, 0, 54*mm, 86*mm, fill=1)
+    # Fundo e Borda Dourada
+    c.setFillColor(colors.HexColor("#D4AF37")); c.rect(0, 0, 54*mm, 86*mm, fill=1)
     c.setFillColor(colors.white); c.rect(2*mm, 2*mm, 50*mm, 82*mm, fill=1)
     
     if socio.foto:
@@ -222,9 +233,9 @@ def gerar_cracha(id):
     c.setFont("Helvetica-Bold", 7); c.drawCentredString(27*mm, 35*mm, f"MATRÍCULA: {socio.matricula}")
     c.setFont("Helvetica", 7); c.drawCentredString(27*mm, 31*mm, f"PLACA: {socio.placa}")
     
-    # Rodapé Institucional
-    c.setFillColor(colors.HexColor("#D4AF37")); c.rect(2*mm, 2*mm, 50*mm, 12*mm, fill=1)
-    c.setFillColor(colors.black); c.setFont("Helvetica-Bold", 4)
+    # Rodapé do Crachá
+    c.setFillColor(colors.HexColor("#1a1a1a")); c.rect(2*mm, 2*mm, 50*mm, 12*mm, fill=1)
+    c.setFillColor(colors.white); c.setFont("Helvetica-Bold", 4)
     c.drawCentredString(27*mm, 10*mm, "IDENTIFICAÇÃO DE ASSOCIADO")
     c.setFont("Helvetica", 3); c.drawCentredString(27*mm, 7*mm, conf.nome_associacao[:60])
     
@@ -238,15 +249,14 @@ def gerar_relatorio_pdf():
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
     styles = getSampleStyleSheet()
     
+    # Cabeçalho Justificado e Luxuoso
     estilo_titulo = ParagraphStyle('T', alignment=1, fontSize=12, leading=14, fontName='Helvetica-Bold', spaceAfter=10)
     estilo_normal = ParagraphStyle('N', alignment=0, fontSize=9, fontName='Helvetica')
     
     elements = []
     if conf.logo_path:
-        logo_path = os.path.join(app.config['UPLOAD_FOLDER'], conf.logo_path)
-        if os.path.exists(logo_path):
-            logo_img = RLImage(logo_path, 30*mm, 30*mm)
-            logo_img.hAlign = 'CENTER'; elements.append(logo_img); elements.append(Spacer(1, 10))
+        logo_img = RLImage(os.path.join(app.config['UPLOAD_FOLDER'], conf.logo_path), 30*mm, 30*mm)
+        logo_img.hAlign = 'CENTER'; elements.append(logo_img); elements.append(Spacer(1, 10))
     
     elements.append(Paragraph(conf.nome_associacao, estilo_titulo))
     elements.append(Paragraph(f"CNPJ: {conf.cnpj}", estilo_titulo))
@@ -261,18 +271,21 @@ def gerar_relatorio_pdf():
     doc.build(elements); buffer.seek(0)
     return make_response(buffer.getvalue(), 200, {'Content-Type': 'application/pdf'})
 
-# --- SERVIR ARQUIVOS ---
+# --- SERVIR ARQUIVOS ESTÁTICOS ---
 @app.route('/static/uploads/<path:filename>')
 def serve_uploads(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# --- INICIALIZAÇÃO PARA DEPLOY ---
+# --- INICIALIZAÇÃO (ALTERADO PARA FUNCIONAR NO RENDER) ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        if not Configuracao.query.first():
+        if not Configuracao.query.first(): 
             db.session.add(Configuracao())
             db.session.commit()
-            
+    
+    # 1. Pega a porta do Render ou usa 5000 se for local
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    # 2. Roda no host 0.0.0.0 (obrigatório para Render)
+    # 3. Mantém debug=True apenas se quiser testar localmente
+    app.run(host='0.0.0.0', port=port, debug=True)
