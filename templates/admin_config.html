@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-warning fw-bold">CONFIGURAÇÕES DA ASSOCIAÇÃO</div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="small fw-bold">NOME DA ENTIDADE</label>
+                        <input type="text" name="nome_entidade" class="form-control" value="{{ config.nome_associacao }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">CNPJ</label>
+                        <input type="text" name="cnpj" class="form-control" value="{{ config.cnpj }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">E-MAIL</label>
+                        <input type="email" name="email" class="form-control" value="{{ config.email_assoc }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">TELEFONE</label>
+                        <input type="text" name="telefone" class="form-control" value="{{ config.telefone_assoc }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">ENDEREÇO COMPLETO</label>
+                        <input type="text" name="endereco" class="form-control" value="{{ config.endereco_assoc }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">LOGOMARCA (PNG/JPG)</label>
+                        <input type="file" name="logo" class="form-control">
+                    </div>
+                    <button class="btn btn-dark w-100 fw-bold">SALVAR CONFIGURAÇÕES</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

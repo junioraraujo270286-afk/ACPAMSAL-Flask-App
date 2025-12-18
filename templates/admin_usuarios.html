@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white fw-bold">
+                CRIAR NOVO USUÁRIO
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="small fw-bold">USUÁRIO / E-MAIL</label>
+                        <input type="text" name="user" class="form-control" placeholder="ex: fiscal@acpamsal.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">SENHA</label>
+                        <input type="password" name="pass" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">TIPO DE ACESSO</label>
+                        <select name="tipo" class="form-select">
+                            <option value="admin">Administrador (Total)</option>
+                            <option value="consulta">Gestor de Consulta (Criar/Remover)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">CRIAR ACESSO</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header bg-white fw-bold">USUÁRIOS CADASTRADOS</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Username</th>
+                            <th>Permissão</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td class="fw-bold">{{ u.username }}</td>
+                            <td>
+                                {% if u.tipo == 'admin' %}
+                                <span class="badge bg-dark">ADMINISTRADOR</span>
+                                {% else %}
+                                <span class="badge bg-info">GESTOR CONSULTA</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('deletar_usuario', id=u.id) }}" 
+                                   class="btn btn-sm btn-outline-danger" 
+                                   onclick="return confirm('Tem certeza que deseja remover este acesso?')">
+                                    <i class="bi bi-trash"></i> Remover
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

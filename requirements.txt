@@ -1,5 +1,5 @@
-Flask
-Flask-SQLAlchemy
+flask
+flask-sqlalchemy
+reportlab
+werkzeug
 gunicorn
-psycopg2-binary
-python-dateutil

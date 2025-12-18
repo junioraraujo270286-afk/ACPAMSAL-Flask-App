@@ -1,132 +1,84 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 text-center">
+        <div class="mb-4">
+            {% if config.logo_path %}
+                <img src="{{ url_for('static', filename='uploads/' + config.logo_path) }}" height="100" class="mb-3">
+            {% endif %}
+            <h2 class="fw-bold text-dark">CONSULTA PÚBLICA DE CONDUTORES</h2>
+            <p class="text-muted">{{ config.nome_associacao }}</p>
+        </div>
 
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ACPAMSAL - Dashboard</title>
-<!-- Inclui Tailwind CSS para estilização moderna e responsiva -->
-<script src="https://www.google.com/search?q=https://cdn.tailwindcss.com"></script>
-<style>
-/* Define a fonte Inter como padrão */
-body { font-family: 'Inter', sans-serif; }
-</style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-
-<!-- Barra de Navegação Simples (Header) -->
-<nav class="bg-white shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <div class="flex-shrink-0 flex items-center">
-                    <span class="text-xl font-bold text-blue-600">ACPAMSAL</span>
-                </div>
-                <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                    <a href="{{ url_for('index') }}" class="border-b-2 border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">Dashboard</a>
-                    <a href="{{ url_for('lista_associados') }}" class="border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">Associados</a>
-                    <a href="#" class="border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">Financeiro</a>
-                </div>
-            </div>
-            <div class="flex items-center">
-                <a href="{{ url_for('logout') }}" class="ml-4 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">Sair</a>
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-body p-4">
+                <form action="{{ url_for('consulta_publica') }}" method="POST" class="row g-2">
+                    <div class="col-md-9">
+                        <input type="text" name="busca" class="form-control form-control-lg border-warning" 
+                               placeholder="Digite a Placa, Matrícula ou Nome..." required>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-warning btn-lg w-100 fw-bold">
+                            <i class="bi bi-search"></i> BUSCAR
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-</nav>
 
-<!-- Conteúdo Principal -->
-<main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Dashboard Administrativo</h1>
-    
-    <!-- Mensagens Flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="space-y-4 mb-6">
-            {% for category, message in messages %}
-                <div class="rounded-lg p-4 {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'warning' %}bg-yellow-100 text-yellow-700{% else %}bg-green-100 text-green-700{% endif %} shadow-md" role="alert">
-                    {{ message }}
+        {% if busca_realizada %}
+            <div class="row justify-content-center">
+                {% for r in resultados %}
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow text-start">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                {% if r.foto %}
+                                    <img src="{{ url_for('serve_uploads', filename=r.foto) }}" 
+                                         class="rounded-circle border border-3 border-warning" 
+                                         style="width: 80px; height: 80px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-secondary rounded-circle text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 80px; height: 80px;">
+                                        <i class="bi bi-person-fill fs-2"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="mb-0 fw-bold">{{ r.nome }}</h5>
+                                <p class="small text-muted mb-1">MATRÍCULA: {{ r.matricula }}</p>
+                                <p class="small text-muted mb-2">PLACA: {{ r.placa }}</p>
+                                
+                                {% if r.status == 'ATIVO' %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> REGULARIZADO</span>
+                                {% else %}
+                                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> PENDENTE</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
+                {% else %}
+                <div class="alert alert-danger shadow-sm border-0">
+                    <i class="bi bi-x-circle-fill"></i> Nenhum associado encontrado com esses dados.
+                </div>
+                {% endfor %}
             </div>
         {% endif %}
-    {% endwith %}
+    </div>
+</div>
 
-    <!-- Cards de Métricas -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        
-        <!-- Card 1: Total de Associados -->
-        <div class="bg-white overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <div class="p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-blue-100 rounded-full p-3 text-blue-600">
-                        <!-- Icone de Usuários (SVG) -->
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-2m2 0h-2m-10.356-1.857A3 3 0 005 18v2m0 0h2m0 0h-2m10.356-1.857a3 3 0 00-5.356 0M4 10h16M4 14h16m-5-4V6a2 2 0 00-2-2H9a2 2 0 00-2 2v4m3 0v4m0-4h4m-4 0h4m-2 4a3 3 0 01-6 0"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dt class="text-sm font-medium text-gray-500 truncate">Total de Associados</dt>
-                        <dd class="mt-1 flex items-baseline">
-                            <div class="text-2xl font-semibold text-gray-900">
-                                {{ total_associados }}
-                            </div>
-                        </dd>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3 text-sm">
-                <a href="{{ url_for('lista_associados') }}" class="text-blue-600 hover:text-blue-900 font-medium">Ver todos</a>
-            </div>
-        </div>
-
-        <!-- Card 2: Receita Total (Pagamentos) -->
-        <div class="bg-white overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <div class="p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-green-100 rounded-full p-3 text-green-600">
-                        <!-- Icone de Dinheiro (SVG) -->
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4 .915-4 2s1.515 2 4 2c2.485 0 4-.915 4-2s-1.515-2-4-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18c-2.485 0-4 .915-4 2s1.515 2 4 2c2.485 0 4-.915 4-2s-1.515-2-4-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a4 4 0 00-4 4v.5"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 6.5V6a4 4 0 00-4-4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 17.5V18a4 4 0 01-4 4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17.5V18a4 4 0 014-4"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dt class="text-sm font-medium text-gray-500 truncate">Receita Total (Exemplo)</dt>
-                        <dd class="mt-1 flex items-baseline">
-                            <div class="text-2xl font-semibold text-gray-900">
-                                R$ {{ "%.2f" | format(total_pagamentos) }}
-                            </div>
-                        </dd>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3 text-sm">
-                <a href="#" class="text-green-600 hover:text-green-900 font-medium">Detalhes dos Pagamentos</a>
-            </div>
-        </div>
-        
-        <!-- Card 3: Despesas Recentes (Placeholder) -->
-        <div class="bg-white overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <div class="p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-red-100 rounded-full p-3 text-red-600">
-                        <!-- Icone de Despesa (SVG) -->
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 4h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dt class="text-sm font-medium text-gray-500 truncate">Despesas no Mês</dt>
-                        <dd class="mt-1 flex items-baseline">
-                            <div class="text-2xl font-semibold text-gray-900">
-                                R$ 0.00
-                            </div>
-                        </dd>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3 text-sm">
-                <a href="#" class="text-red-600 hover:text-red-900 font-medium">Gerenciar Despesas</a>
-            </div>
+<footer class="mt-5 pt-4 border-top text-center text-muted">
+    <div class="container">
+        <p class="small mb-1"><strong>{{ config.nome_associacao }}</strong></p>
+        <p class="small mb-1">CNPJ: {{ config.cnpj }}</p>
+        <p class="small">Sede: {{ config.endereco_assoc }}</p>
+        <div class="social-icons">
+            <a href="https://wa.me/55{{ config.telefone_assoc|replace('(','')|replace(')','')|replace(' ','')|replace('-','') }}" 
+               class="text-success text-decoration-none mx-2">
+               <i class="bi bi-whatsapp"></i> Suporte ACPAMSAL
+            </a>
         </div>
     </div>
-
-</main>
-
-
-</body>
-</html>
+</footer>
+{% endblock %}

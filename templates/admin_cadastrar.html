@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-11">
+            <div class="card shadow-lg border-0" style="border-radius: 15px;">
+                <div class="card-header bg-dark text-warning py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2"></i> CADASTRO DE ASSOCIADO - DOSSIÊ COMPLETO</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3 text-center border-end">
+                                <label class="form-label fw-bold">Foto de Perfil</label>
+                                <div class="mb-3">
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; border: 2px dashed #ccc;">
+                                        <i class="bi bi-camera fs-1 text-muted"></i>
+                                    </div>
+                                </div>
+                                <input type="file" name="foto" class="form-control form-control-sm" required>
+                                <div class="mt-3">
+                                    <label class="form-label small fw-bold text-danger">Nº MATRÍCULA (MANUAL)</label>
+                                    <input type="text" name="matricula" class="form-control text-center fw-bold border-danger" placeholder="Ex: 2026-001" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-9">
+                                <h6 class="text-primary fw-bold border-bottom pb-2">DADOS PESSOAIS</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label small fw-bold">NOME COMPLETO</label>
+                                        <input type="text" name="nome" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">SITUAÇÃO (2026)</label>
+                                        <select name="status" class="form-select bg-warning-subtle fw-bold">
+                                            <option value="ATIVO">ATIVO</option>
+                                            <option value="EM DÉBITO">EM DÉBITO</option>
+                                            <option value="INATIVO">INATIVO</option>
+                                            <option value="DESLIGADO">DESLIGADO</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">RG</label>
+                                        <input type="text" name="rg" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">CPF</label>
+                                        <input type="text" name="cpf" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">POSSUI CNH?</label>
+                                        <select name="cnh" class="form-select">
+                                            <option value="SIM">SIM</option>
+                                            <option value="NÃO">NÃO</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">CONTATO / WHATSAPP</label>
+                                        <input type="text" name="contato" class="form-control" placeholder="(91) 98212-2175" required>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label small fw-bold">E-MAIL (LOGIN DO ASSOCIADO)</label>
+                                        <input type="email" name="email" class="form-control" placeholder="exemplo@gmail.com" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="text-primary fw-bold border-bottom pb-2">ENDEREÇO RESIDENCIAL</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-9">
+                                        <input type="text" name="rua" class="form-control" placeholder="Rua / Logradouro" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" name="num" class="form-control" placeholder="Nº" required>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <input type="text" name="bairro" class="form-control" placeholder="Bairro" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 border-start">
+                                <h6 class="text-primary fw-bold border-bottom pb-2">LOCAL DE TRABALHO (PONTO)</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-7">
+                                        <input type="text" name="ponto" class="form-control" placeholder="Nome do Ponto" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" name="ponto_b" class="form-control" placeholder="Bairro do Ponto" required>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <small class="text-muted">Informe o local fixo onde o associado exerce a atividade em Salinópolis.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-primary fw-bold border-bottom pb-2">ESPECIFICAÇÕES DA MOTO</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">PLACA</label>
+                                        <input type="text" name="placa" class="form-control fw-bold" placeholder="ABC-1234" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">MODELO</label>
+                                        <input type="text" name="modelo" class="form-control" placeholder="Ex: Honda CG 160" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">ANO</label>
+                                        <input type="text" name="ano" class="form-control" placeholder="2024" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">RENAVAM</label>
+                                        <input type="text" name="renavam" class="form-control" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="text-muted small mb-0">
+                                <i class="bi bi-info-circle me-1"></i> 
+                                Ao salvar, as mensalidades de 2026 serão habilitadas para este perfil.
+                            </p>
+                            <div>
+                                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary me-2">CANCELAR</a>
+                                <button type="submit" class="btn btn-dark px-5 fw-bold">SALVAR REGISTRO</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

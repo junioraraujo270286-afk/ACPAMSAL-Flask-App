@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Gestão de Associados</h2>
+    <a href="{{ url_for('admin_cadastrar') }}" class="btn btn-acpamsal">NOVO CADASTRO</a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-dark text-white">
+                <tr>
+                    <th>Foto</th>
+                    <th>Matrícula</th>
+                    <th>Nome</th>
+                    <th>Placa</th>
+                    <th>Status Financeiro</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in associados %}
+                <tr>
+                    <td><img src="{{ url_for('static', filename='uploads/' + a.foto) }}" class="rounded-circle" width="40" height="40"></td>
+                    <td class="fw-bold">{{ a.matricula }}</td>
+                    <td>{{ a.nome }}</td>
+                    <td><span class="badge bg-secondary">{{ a.placa }}</span></td>
+                    <td>
+                        <span class="badge {% if a.status_financeiro == 'ATIVO' %}bg-success{% elif a.status_financeiro == 'EM DÉBITO' %}bg-danger{% else %}bg-warning{% endif %}">
+                            {{ a.status_financeiro }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('gerar_cracha', id=a.id) }}" class="btn btn-sm btn-outline-dark" target="_blank">Imprimir Crachá</a>
+                        <button class="btn btn-sm btn-danger">Remover</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-4">Relatórios do Sistema</h2>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="fw-bold text-danger">Relatório de Inadimplência</h5>
+                <p>Gera uma lista em PDF de todos os sócios com mensalidades pendentes de 2026.</p>
+                <a href="#" class="btn btn-danger w-100">GERAR PDF DE DÉBITOS</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="fw-bold text-dark">Estatísticas do Ponto</h5>
+                <p>Relatório de quantos associados existem por Bairro e Ponto de Trabalho.</p>
+                <a href="#" class="btn btn-dark w-100">GERAR PDF POR PONTO</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-warning fw-bold">
+                GERAR LANÇAMENTOS 2026
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="small fw-bold">MÊS DE REFERÊNCIA</label>
+                        <input type="month" name="mes" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">VALOR (R$)</label>
+                        <input type="number" name="valor" class="form-control" step="0.01" value="20.00" required>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 fw-bold">LANÇAR PARA TODOS</button>
+                </form>
+                <hr>
+                <div class="alert alert-secondary small">
+                    <i class="bi bi-info-circle"></i> <strong>Regra de Bloqueio:</strong> 
+                    Sócios com 3 ou mais mensalidades em atraso são marcados como <strong>DESLIGADOS</strong> e removidos da consulta pública automaticamente.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                CONTROLE DE RECEBIMENTOS
+                <span class="badge bg-primary">ACPAMSAL</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sócio</th>
+                            <th>Mês</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th class="text-end">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in mensalidades %}
+                        <tr>
+                            <td>
+                                <strong>{{ m.socio.nome }}</strong><br>
+                                <small class="text-muted">MAT: {{ m.socio.matricula }}</small>
+                            </td>
+                            <td>{{ m.mes_ref }}</td>
+                            <td>R$ {{ "%.2f"|format(m.valor) }}</td>
+                            <td>
+                                {% if m.pago %}
+                                <span class="badge bg-success">PAGO</span>
+                                {% else %}
+                                <span class="badge bg-danger">PENDENTE</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if not m.pago %}
+                                <a href="{{ url_for('baixar_pagamento', id=m.id) }}" class="btn btn-sm btn-success fw-bold">
+                                    <i class="bi bi-cash-check"></i> BAIXAR
+                                </a>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary" disabled>CONCLUÍDO</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
