@@ -3,13 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA ACPAMSAL - Oficial</title>
+    <title>MOB ACPAMSAL - Gestão Oficial</title>
+    
+    <meta name="theme-color" content="#D4AF37">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MOB ACPAMSAL">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo_app.png') }}">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
     <style>
         :root { --gold: #D4AF37; --dark-bg: #121212; --sidebar-w: 260px; }
         body { background-color: #f1f2f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
+
         /* Sidebar Luxo */
         .sidebar {
             width: var(--sidebar-w);
@@ -42,11 +52,11 @@
         .nav-link.active { border-left: 5px solid var(--gold); background: #1a1a1a; color: var(--gold) !important; }
 
         .content-area { margin-left: var(--sidebar-w); padding: 40px; }
-        
+
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
             .sidebar-brand h5, .nav-link span { display: none; }
-            .content-area { margin-left: 80px; }
+            .content-area { margin-left: 80px; padding: 20px; }
         }
     </style>
 </head>
@@ -57,7 +67,7 @@
         <h5 class="mb-0">ACPAMSAL</h5>
         <small class="text-muted">Gestão 2026</small>
     </div>
-    
+
     <ul class="nav-menu">
         {% if session.get('admin') %}
             <li class="nav-item"><a href="{{ url_for('admin_dashboard') }}" class="nav-link"><i class="bi bi-people-fill"></i> <span>GERENCIAR SÓCIOS</span></a></li>
@@ -66,7 +76,7 @@
             <li class="nav-item"><a href="{{ url_for('gerar_relatorio_pdf') }}" target="_blank" class="nav-link"><i class="bi bi-file-earmark-pdf-fill"></i> <span>RELATÓRIOS</span></a></li>
             <li class="nav-item"><a href="{{ url_for('admin_usuarios') }}" class="nav-link"><i class="bi bi-shield-lock-fill"></i> <span>USUÁRIOS</span></a></li>
             <li class="nav-item"><a href="{{ url_for('admin_config') }}" class="nav-link"><i class="bi bi-gear-fill"></i> <span>CONFIGURAÇÕES</span></a></li>
-            <li class="nav-item"><a href="{{ url_for('logout') }}" class="nav-link text-danger"><i class="bi bi-door-open-fill text-danger"></i> <span>SAIR DO SISTEMA</span></a></li>
+            <li class="nav-item"><a href="{{ url_for('logout') }}" class="nav-link text-danger"><i class="bi bi-door-open-fill"></i> <span>SAIR DO SISTEMA</span></a></li>
         {% else %}
             <li class="nav-item"><a href="/" class="nav-link"><i class="bi bi-search"></i> <span>CONSULTA PÚBLICA</span></a></li>
             <li class="nav-item"><a href="{{ url_for('login_socio') }}" class="nav-link"><i class="bi bi-person-circle"></i> <span>ÁREA DO SÓCIO</span></a></li>
@@ -79,12 +89,16 @@
     <div class="container-fluid">
         {% with messages = get_flashed_messages() %}
             {% if messages %}{% for m in messages %}
-                <div class="alert alert-warning border-0 shadow-sm">{{ m }}</div>
+                <div class="alert alert-warning border-0 shadow-sm alert-dismissible fade show" role="alert">
+                    {{ m }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             {% endfor %}{% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
     </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
