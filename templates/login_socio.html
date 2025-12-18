@@ -1,35 +1,26 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
 <div class="row justify-content-center mt-5">
-    <div class="col-md-5">
-        <div class="card shadow-lg border-0">
-            <div class="card-header bg-primary text-white text-center py-3">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-person-badge"></i> ÁREA DO ASSOCIADO</h5>
+    <div class="col-md-4">
+        <div class="card shadow border-0 p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-badge-fill text-primary" style="font-size: 3rem;"></i>
+                <h4>Portal do Associado</h4>
+                <p class="text-muted small">Acesse com seus dados oficiais</p>
             </div>
-            <div class="card-body p-4">
-                <p class="text-center text-muted small">Acesse com seu e-mail cadastrado e use sua matrícula como senha.</p>
-                <form method="POST">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">E-MAIL</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control" placeholder="exemplo@email.com" required>
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold">SENHA (Nº MATRÍCULA)</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
-                            <input type="password" name="senha" class="form-control" placeholder="Digite sua matrícula" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
-                        ENTRAR NO PERFIL
-                    </button>
-                </form>
-            </div>
-            <div class="card-footer bg-light text-center py-3">
-                <a href="/" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> Voltar para consulta</a>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">E-mail Cadastrado</label>
+                    <input type="email" name="email" class="form-control" placeholder="seu@email.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Senha (Sua Matrícula)</label>
+                    <input type="password" name="senha" class="form-control" placeholder="Nº Matrícula" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Entrar no Perfil</button>
+            </form>
+            <div class="mt-3 text-center">
+                <a href="{{ url_for('index') }}" class="text-decoration-none small">Voltar ao Início</a>
             </div>
         </div>
     </div>
