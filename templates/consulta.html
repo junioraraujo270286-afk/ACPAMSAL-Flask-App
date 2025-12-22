@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta ACPAMSAL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light text-center">
+    <div class="container py-5">
+        <div class="card shadow-lg mx-auto" style="max-width: 400px; border-radius: 20px; overflow: hidden; border: none;">
+            <div class="{{ 'bg-success' if status == 'ATIVO' else 'bg-danger' }} p-3 text-white fw-bold">
+                SITUAÇÃO: {{ status }}
+            </div>
+            <div class="card-body">
+                <img src="/static/uploads/{{ socio.foto_perfil }}" class="rounded-circle mb-3 border border-4" style="width: 150px; height: 150px; object-fit: cover;">
+                <h4 class="fw-bold">{{ socio.nome }}</h4>
+                <p class="text-muted">Matrícula: {{ socio.matricula }}<br>Placa: {{ socio.moto_placa }}</p>
+                <hr>
+                <p class="small text-secondary">ACPAMSAL - Salinópolis/PA<br>CNPJ: 39.242.691/0001-75</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .logo { max-height: 80px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 11px; }
+        th { background-color: #eee; }
+        .footer { position: fixed; bottom: 20px; width: 100%; text-align: center; border-top: 1px solid #000; padding-top: 5px; font-size: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>{{ config_global.nome_entidade }}</h2>
+        <p>{{ config_global.endereco }}<br>{{ config_global.contatos }}</p>
+    </div>
+
+    <h3 style="text-align: center;">RELATÓRIO GERAL DE ASSOCIADOS - SALINÓPOLIS/PA</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>MATRÍCULA</th>
+                <th>NOME COMPLETO</th>
+                <th>RG</th>
+                <th>PLACA</th>
+                <th>MOTO / MODELO</th>
+                <th>PONTO</th>
+                <th>STATUS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in lista %}
+            <tr>
+                <td>{{ s.matricula }}</td>
+                <td>{{ s.nome }}</td>
+                <td>{{ s.rg }}</td>
+                <td>{{ s.moto_placa }}</td>
+                <td>{{ s.moto_marca }} {{ s.moto_modelo }}</td>
+                <td>{{ s.ponto }}</td>
+                <td>{{ "ATIVO" if s.esta_apto_consulta() else "INADIMPLENTE" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Documento gerado automaticamente pelo Sistema Administrativo ACPAMSAL - {{ now }}
+    </div>
+</body>
+</html>

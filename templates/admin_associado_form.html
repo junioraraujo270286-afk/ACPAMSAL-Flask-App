@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="fw-bold text-center border-bottom border-dark pb-2 text-uppercase">
+    {% if socio %}Alterar Dados{% else %}Novo Cadastro{% endif %} de Associado
+</h4>
+
+<form method="POST" enctype="multipart/form-data" class="row g-3 mt-2">
+    <div class="col-12"><h6 class="fw-bold bg-dark text-white p-1 ps-2">DADOS DO CONDUTOR</h6></div>
+    
+    <div class="col-md-12 text-center mb-2">
+        {% if socio %}
+        <img src="{{ url_for('static', filename='uploads/' + socio.foto) }}" class="rounded border border-dark mb-2" style="width: 80px; height: 100px; object-fit: cover;">
+        {% endif %}
+        <input type="file" name="foto" class="form-control border-dark">
+        <small class="text-muted">Selecione uma foto para o perfil</small>
+    </div>
+
+    <div class="col-md-8">
+        <label class="small fw-bold">NOME COMPLETO:</label>
+        <input type="text" name="nome" class="form-control" value="{{ socio.nome if socio else '' }}" required>
+    </div>
+    <div class="col-md-4">
+        <label class="small fw-bold">MATRÍCULA:</label>
+        <input type="text" name="matricula" class="form-control" value="{{ socio.matricula if socio else '' }}" required>
+    </div>
+    <div class="col-md-4">
+        <label class="small fw-bold">RG:</label>
+        <input type="text" name="rg" class="form-control" value="{{ socio.rg if socio else '' }}">
+    </div>
+    <div class="col-md-4">
+        <label class="small fw-bold">CONTATO:</label>
+        <input type="text" name="contato" class="form-control" value="{{ socio.contato if socio else '' }}">
+    </div>
+    <div class="col-md-4">
+        <label class="small fw-bold">E-MAIL:</label>
+        <input type="email" name="email" class="form-control" value="{{ socio.email if socio else '' }}">
+    </div>
+
+    <div class="col-12 mt-3"><h6 class="fw-bold bg-dark text-white p-1 ps-2">DADOS DA MOTO</h6></div>
+    
+    <div class="col-md-3">
+        <label class="small fw-bold">PLACA:</label>
+        <input type="text" name="placa" class="form-control text-uppercase" value="{{ socio.moto_placa if socio else '' }}" required>
+    </div>
+    <div class="col-md-3">
+        <label class="small fw-bold">MARCA:</label>
+        <input type="text" name="marca" class="form-control" value="{{ socio.moto_marca if socio else '' }}" placeholder="Ex: Honda">
+    </div>
+    <div class="col-md-3">
+        <label class="small fw-bold">MODELO:</label>
+        <input type="text" name="modelo" class="form-control" value="{{ socio.moto_modelo if socio else '' }}" placeholder="Ex: CG 160 Titan">
+    </div>
+    <div class="col-md-3">
+        <label class="small fw-bold">COR:</label>
+        <input type="text" name="cor" class="form-control" value="{{ socio.moto_cor if socio else '' }}">
+    </div>
+    <div class="col-12">
+        <label class="small fw-bold">PONTO DE TRABALHO:</label>
+        <input type="text" name="ponto" class="form-control" value="{{ socio.ponto if socio else '' }}">
+    </div>
+
+    <div class="col-12 mt-4">
+        <button type="submit" class="btn btn-dark w-100 fw-bold py-2">SALVAR CADASTRO COMPLETO</button>
+        <a href="{{ url_for('lista_associados') }}" class="btn btn-outline-dark w-100 mt-2 fw-bold">CANCELAR</a>
+    </div>
+</form>
+{% endblock %}

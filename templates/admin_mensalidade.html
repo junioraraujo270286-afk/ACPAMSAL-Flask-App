@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h5 class="fw-bold text-center">REGISTRAR MENSALIDADE</h5>
+<form method="POST" class="bg-light p-3 rounded border border-dark shadow-sm">
+    <div class="mb-3">
+        <label class="small fw-bold">SELECIONE O MOTOBOY:</label>
+        <select name="socio_id" class="form-select border-dark" required>
+            {% for s in associados %}
+            <option value="{{ s.id }}">{{ s.nome }} ({{ s.matricula }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="small fw-bold">MÊS DE REFERÊNCIA:</label>
+        <input type="text" name="ref" class="form-control border-dark" placeholder="Ex: Dezembro/2025" required>
+    </div>
+    <button type="submit" class="btn btn-warning w-100 fw-bold border-dark">SALVAR PAGAMENTO</button>
+</form>
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-dark w-100 mt-3">VOLTAR</a>
+{% endblock %}

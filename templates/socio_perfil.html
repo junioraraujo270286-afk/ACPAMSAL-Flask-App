@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4 text-center">
+        <img src="{{ url_for('static', filename='uploads/' + socio.foto) }}" class="img-thumbnail border-dark shadow-sm mb-3" style="max-height: 250px;">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="foto" class="form-control form-control-sm border-dark mb-2" required>
+            <button class="btn btn-sm btn-dark w-100">ATUALIZAR FOTO</button>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <h4 class="fw-bold text-uppercase border-bottom border-dark">{{ socio.nome }}</h4>
+        <div class="row small mb-3">
+            <div class="col-6"><b>MATRÍCULA:</b> {{ socio.matricula }}</div>
+            <div class="col-6"><b>RG:</b> {{ socio.rg }}</div>
+            <div class="col-6"><b>E-MAIL:</b> {{ socio.email }}</div>
+            <div class="col-6"><b>CONTATO:</b> {{ socio.contato }}</div>
+            <div class="col-12 mt-2"><b>PONTO:</b> {{ socio.ponto }}</div>
+        </div>
+        <h6 class="fw-bold bg-dark text-white p-2 rounded">DADOS DA MOTO</h6>
+        <p><b>MARCA/MODELO:</b> {{ socio.moto_marca }} {{ socio.moto_modelo }} ({{ socio.moto_cor }})</p>
+        <p><b>PLACA:</b> {{ socio.moto_placa }}</p>
+        
+        <h6 class="fw-bold mt-4 border-bottom border-dark">SITUAÇÃO FINANCEIRA</h6>
+        <ul class="list-group list-group-flush border border-dark rounded">
+            {% for p in socio.pagamentos %}
+            <li class="list-group-item bg-warning-subtle">✅ MÊS {{ p.referencia }} - PAGO EM {{ p.data_pag.strftime('%d/%m/%Y') }}</li>
+            {% endfor %}
+        </ul>
+        
+        {% if not socio.esta_em_dia() %}
+        <div class="alert alert-danger mt-3 border-dark text-center">
+            <strong>DÉBITO EM ABERTO!</strong><br>
+            CHAVE PIX CNPJ: 39.242.691/0001-75<br>
+            <small>ACPAMSAL - Salinópolis</small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<a href="{{ url_for('logout') }}" class="btn btn-outline-dark w-100 mt-4">DESCONECTAR</a>
+{% endblock %}

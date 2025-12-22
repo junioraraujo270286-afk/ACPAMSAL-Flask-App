@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="text-center mb-4">
+    <h3 class="fw-bold border-bottom border-dark pb-2">PAINEL ADMINISTRATIVO - ACPAMSAL</h3>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="p-3 border border-dark rounded bg-warning shadow-sm h-100">
+            <h5 class="fw-bold text-center">ASSOCIADOS</h5>
+            <a href="{{ url_for('lista_associados') }}" class="btn btn-dark w-100 mb-2 fw-bold">GERENCIAR (C/A/R)</a>
+            <a href="{{ url_for('gerar_pdf') }}" target="_blank" class="btn btn-danger w-100 fw-bold border-dark">GERAR RELATÓRIO PDF</a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="p-3 border border-dark rounded bg-light shadow-sm h-100">
+            <h5 class="fw-bold text-center">MENSALIDADES</h5>
+            <a href="{{ url_for('lista_mensalidades') }}" class="btn btn-warning w-100 mb-2 fw-bold border-dark">HISTÓRICO / EXCLUIR</a>
+            <a href="{{ url_for('nova_mensalidade') }}" class="btn btn-success w-100 fw-bold border-dark">LANÇAR NOVO PAGO</a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="p-3 border border-dark rounded bg-primary text-white shadow-sm h-100">
+            <h5 class="fw-bold text-center">AÇÃO SOCIAL</h5>
+            <a href="{{ url_for('lista_familias') }}" class="btn btn-light w-100 mb-2 fw-bold border-dark">GERENCIAR FAMÍLIAS</a>
+            <a href="{{ url_for('cadastrar_familia') }}" class="btn btn-light w-100 fw-bold border-dark">NOVO CADASTRO</a>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-dark w-100 fw-bold">SAIR DO SISTEMA</a>
+</div>
+{% endblock %}

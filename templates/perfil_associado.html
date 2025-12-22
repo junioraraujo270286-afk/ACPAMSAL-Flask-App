@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="text-center mb-3">
+    <h4 class="fw-bold border-bottom border-dark pb-2">MEU PERFIL</h4>
+</div>
+
+<div class="text-center mb-3">
+    <img src="{{ url_for('static', filename='uploads/' + socio.foto) }}" 
+         class="rounded border border-dark shadow-sm" style="width: 130px; height: 150px; object-fit: cover;">
+    <form method="POST" enctype="multipart/form-data" class="mt-2">
+        <label class="btn btn-sm btn-outline-dark fw-bold">
+            ALTERAR MINHA FOTO
+            <input type="file" name="foto" hidden onchange="this.form.submit()">
+        </label>
+    </form>
+</div>
+
+<div class="row g-2">
+    <div class="col-12"><label class="small fw-bold">NOME:</label><input class="form-control" value="{{ socio.nome }}" readonly></div>
+    <div class="col-6"><label class="small fw-bold">MATRÍCULA:</label><input class="form-control" value="{{ socio.matricula }}" readonly></div>
+    <div class="col-6"><label class="small fw-bold">PLACA:</label><input class="form-control" value="{{ socio.moto_placa }}" readonly></div>
+    <div class="col-12">
+        <label class="small fw-bold">STATUS DE FILIAÇÃO:</label>
+        {% if socio.esta_apto_consulta() %}
+            <div class="alert alert-success p-2 text-center border-dark mb-0">SITUAÇÃO REGULAR</div>
+        {% else %}
+            <div class="alert alert-danger p-2 text-center border-dark mb-0">SITUAÇÃO INADIMPLENTE</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="d-grid gap-2 mt-4">
+    <a href="{{ url_for('pagar_mensalidade') }}" class="btn btn-primary fw-bold border-dark">PAGAR MENSALIDADE (PIX)</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-dark fw-bold">SAIR</a>
+</div>
+{% endblock %}

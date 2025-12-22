@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold m-0 text-uppercase">FAMÍLIAS - AÇÃO SOCIAL</h4>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-dark btn-sm fw-bold border-dark">VOLTAR</a>
+</div>
+
+<div class="mb-3">
+    <a href="{{ url_for('cadastrar_familia') }}" class="btn btn-primary w-100 fw-bold border-dark shadow-sm">
+        + CADASTRAR NOVA FAMÍLIA
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered border-dark bg-white small shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>RESPONSÁVEL</th>
+                <th>BAIRRO</th>
+                <th>ELEITORES</th>
+                <th>AÇÕES</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in familias %}
+            <tr>
+                <td class="fw-bold text-uppercase">{{ f.responsavel }}</td>
+                <td>{{ f.bairro }}</td>
+                <td class="text-center">{{ f.num_eleitores }}</td>
+                <td class="text-center">
+                    <a href="{{ url_for('remover_familia', id=f.id) }}" 
+                       class="btn btn-sm btn-danger fw-bold" 
+                       onclick="return confirm('Deseja excluir permanentemente esta família?')">X</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center py-3 text-muted">Nenhuma família cadastrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold m-0">CONTROLE DE PAGAMENTOS</h5>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-dark btn-sm fw-bold">VOLTAR</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered border-dark bg-white small">
+        <thead class="table-dark">
+            <tr>
+                <th>DATA</th>
+                <th>ASSOCIADO</th>
+                <th>REFERÊNCIA</th>
+                <th>AÇÃO</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in pagamentos %}
+            <tr>
+                <td>{{ p.data_pag.strftime('%d/%m/%Y') }}</td>
+                <td>{{ p.associado.nome }}</td>
+                <td>{{ p.referencia }}</td>
+                <td class="text-center">
+                    <a href="{{ url_for('remover_mensalidade', id=p.id) }}" class="btn btn-sm btn-danger fw-bold" onclick="return confirm('Remover este registro de pagamento?')">EXCLUIR</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

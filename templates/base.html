@@ -3,165 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA ACPAMSAL - Gestão Profissional</title>
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-
+    <title>ACPAMSAL - GESTÃO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f4f7f6;
-        }
-        .sidebar {
-            min-height: 100vh;
-            background: #212529;
-            color: white;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .sidebar .nav-link:hover {
-            background: #343a40;
-            color: #ffc107;
-        }
-        .sidebar .nav-link i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-        .navbar-brand-custom {
-            font-weight: bold;
-            color: #ffc107 !important;
-            text-align: center;
-            padding: 20px 0;
-            display: block;
-            text-decoration: none;
-            border-bottom: 2px solid #ffc107;
-            margin-bottom: 10px;
-        }
-        .main-content {
-            padding: 20px;
-        }
-        .alert-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-        }
+        body { background-color: #FFD700; font-family: sans-serif; }
+        .main-card { background: rgba(255, 255, 255, 0.95); border: 2px solid #000; border-radius: 10px; padding: 20px; }
+        .btn-dark { border: 1px solid #000; font-weight: bold; }
+        .header-box { background: #FFD700; border: 2px solid #000; padding: 10px; margin-bottom: 20px; text-align: center; }
     </style>
 </head>
 <body>
+    <div class="container py-3">
+        <div class="header-box rounded shadow-sm">
+            {% if config_global.logo %}
+                <img src="{{ url_for('static', filename='uploads/' + config_global.logo) }}" style="max-height: 80px;" onerror="this.style.display='none'">
+            {% endif %}
+            <h6 class="fw-bold m-0 mt-2 text-uppercase">{{ config_global.nome_entidade }}</h6>
+        </div>
 
-    <div class="container-fluid">
-        <div class="row">
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse p-0">
-                <a href="{{ url_for('index') }}" class="navbar-brand-custom">
-                    <i class="bi bi-shield-shaded"></i> ACPAMSAL
-                </a>
-                
-                <div class="position-sticky">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('index') }}">
-                                <i class="bi bi-house-door"></i> Início
-                            </a>
-                        </li>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}{% for category, message in messages %}
+                <div class="alert alert-{{ category }} text-center border-dark fw-bold">{{ message }}</div>
+            {% endfor %}{% endif %}
+        {% endwith %}
 
-                        {% if session.get('admin') %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
-                                <i class="bi bi-speedometer2"></i> Painel Geral
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_cadastrar') }}">
-                                <i class="bi bi-person-plus"></i> Novo Cadastro
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_mensalidades') }}">
-                                <i class="bi bi-cash-stack"></i> Mensalidades
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('gerar_relatorio_pdf') }}" target="_blank">
-                                <i class="bi bi-file-earmark-pdf"></i> Relatórios PDF
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_usuarios') }}">
-                                <i class="bi bi-person-gear"></i> Usuários
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_config') }}">
-                                <i class="bi bi-gear"></i> Configurações
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-danger" href="{{ url_for('logout') }}">
-                                <i class="bi bi-box-arrow-right"></i> Sair
-                            </a>
-                        </li>
+        <div class="main-card shadow">
+            {% block content %}{% endblock %}
+        </div>
 
-                        {% elif session.get('socio_id') %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('perfil_socio') }}">
-                                <i class="bi bi-person-circle"></i> Meu Perfil
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-danger" href="{{ url_for('logout') }}">
-                                <i class="bi bi-box-arrow-right"></i> Sair
-                            </a>
-                        </li>
-
-                        {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login_socio') }}">
-                                <i class="bi bi-person-lock"></i> Área do Sócio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login_admin') }}">
-                                <i class="bi bi-lock"></i> Administração
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </div>
-            </nav>
-
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                
-                <div class="alert-container">
-                    {% with messages = get_flashed_messages() %}
-                      {% if messages %}
-                        {% for message in messages %}
-                          <div class="alert alert-warning alert-dismissible fade show shadow" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                          </div>
-                        {% endfor %}
-                      {% endif %}
-                    {% endwith %}
-                </div>
-
-                {% block content %}{% endblock %}
-                
-                <footer class="mt-5 pt-3 border-top text-center text-muted small">
-                    <p>© 2025 ACPAMSAL - Associação dos Condutores de Salinópolis-PA</p>
-                </footer>
-            </main>
+        <div class="text-center mt-3 small">
+            <p class="mb-0 fw-bold">{{ config_global.endereco }}</p>
+            <p class="text-muted">{{ config_global.contatos }}</p>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

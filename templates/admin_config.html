@@ -1,46 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="card shadow border-0 p-4 mt-4">
-    <h3 class="text-primary"><i class="bi bi-gear-fill"></i> Configurações da Associação</h3>
-    <hr>
-    <form method="POST" enctype="multipart/form-data">
-        <div class="row">
-            <div class="col-md-4 text-center border-end">
-                <h5>Logomarca Atual</h5>
-                {% if config.logo_path %}
-                <img src="{{ url_for('static', filename='uploads/' + config.logo_path) }}" class="img-fluid mb-3" style="max-height: 150px;">
-                {% else %}
-                <div class="alert alert-secondary">Nenhuma logo enviada</div>
-                {% endif %}
-                <input type="file" name="logo" class="form-control">
-                <small class="text-muted">Aparecerá no topo dos PDFs e Crachás</small>
-            </div>
-            <div class="col-md-8">
-                <div class="mb-3">
-                    <label>Nome Completo da Associação</label>
-                    <input type="text" name="nome" class="form-control" value="{{ config.nome_completo }}">
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>CNPJ</label>
-                        <input type="text" name="cnpj" class="form-control" value="{{ config.cnpj }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label>WhatsApp</label>
-                        <input type="text" name="whatsapp" class="form-control" value="{{ config.whatsapp }}">
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label>Endereço Completo</label>
-                    <input type="text" name="endereco" class="form-control" value="{{ config.endereco }}">
-                </div>
-                <div class="mb-3">
-                    <label>E-mail de Contato</label>
-                    <input type="email" name="email" class="form-control" value="{{ config.email_contato }}">
-                </div>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Salvar Configurações</button>
-    </form>
-</div>
+<h4 class="fw-bold text-center border-bottom border-dark pb-2">CONFIGURAÇÃO VISUAL</h4>
+<form method="POST" enctype="multipart/form-data" class="mt-3">
+    <div class="mb-3 p-2 border border-dark rounded">
+        <label class="fw-bold small">LOGOMARCA DA ASSOCIAÇÃO:</label>
+        <input type="file" name="logo" class="form-control border-dark" accept="image/*">
+    </div>
+    <div class="mb-3 p-2 border border-dark rounded">
+        <label class="fw-bold small">IMAGEM DE FUNDO DAS PÁGINAS:</label>
+        <input type="file" name="fundo" class="form-control border-dark" accept="image/*">
+    </div>
+    <button type="submit" class="btn btn-dark w-100 py-3">SALVAR IDENTIDADE VISUAL</button>
+</form>
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-dark w-100 mt-2">VOLTAR</a>
 {% endblock %}

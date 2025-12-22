@@ -1,60 +1,37 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="card shadow border-0 p-4 mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="text-primary"><i class="bi bi-people-fill"></i> Gestão de Associados</h3>
-        <a href="{{ url_for('admin_cadastrar') }}" class="btn btn-success">
-            <i class="bi bi-person-plus"></i> Novo Cadastro
-        </a>
-    </div>
-
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>Foto</th>
-                    <th>Matrícula</th>
-                    <th>Nome</th>
-                    <th>Placa</th>
-                    <th>Status</th>
-                    <th class="text-center">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in associados %}
-                <tr>
-                    <td>
-                        {% if s.foto %}
-                            <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
-                        {% else %}
-                            <i class="bi bi-person-circle fs-4"></i>
-                        {% endif %}
-                    </td>
-                    <td><b>{{ s.matricula }}</b></td>
-                    <td>{{ s.nome }}</td>
-                    <td><span class="badge bg-light text-dark border">{{ s.placa }}</span></td>
-                    <td>
-                        <span class="badge {% if s.status == 'ATIVO' %}bg-success{% else %}bg-danger{% endif %}">
-                            {{ s.status }}
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        <div class="btn-group">
-                            <a href="{{ url_for('admin_editar', id=s.id) }}" class="btn btn-warning btn-sm" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <a href="{{ url_for('admin_remover', id=s.id) }}" 
-                               class="btn btn-danger btn-sm" 
-                               onclick="return confirm('Deseja realmente excluir {{ s.nome }}?')" 
-                               title="Excluir">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="text-center mb-4">
+    <h3 class="fw-bold border-bottom border-dark pb-2">ADMINISTRAÇÃO</h3>
 </div>
+
+<div class="row g-2 mb-4">
+    <div class="col-md-3"><a href="{{ url_for('admin_cadastrar') }}" class="btn btn-primary w-100 shadow-sm">NOVO ASSOCIADO</a></div>
+    <div class="col-md-3"><a href="{{ url_for('admin_mensalidade') }}" class="btn btn-success w-100 shadow-sm">MENSALIDADES</a></div>
+    <div class="col-md-3"><a href="{{ url_for('gerar_pdf') }}" class="btn btn-secondary w-100 shadow-sm">RELATÓRIO PDF</a></div>
+    <div class="col-md-3"><a href="{{ url_for('admin_config') }}" class="btn btn-dark w-100 shadow-sm">CONFIGURAÇÃO</a></div>
+</div>
+
+<div class="list-group">
+    {% for s in associados %}
+    <div class="list-group-item d-flex justify-content-between align-items-center border-dark bg-warning-subtle mb-2 rounded shadow-sm">
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded border border-dark me-3" style="width: 60px; height: 60px; object-fit: cover;">
+            <div>
+                <strong class="text-uppercase">{{ s.nome }}</strong><br>
+                <small class="fw-bold">PLACA: {{ s.moto_placa }} | MAT: {{ s.matricula }}</small><br>
+                {% if s.esta_em_dia() %}
+                    <span class="badge bg-success border border-dark">CREDITADO</span>
+                {% else %}
+                    <span class="badge bg-danger border border-dark">DESLIGADO</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <a href="{{ url_for('admin_editar', id=s.id) }}" class="btn btn-sm btn-dark">EDITAR</a>
+            <a href="{{ url_for('admin_excluir', id=s.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('REMOVER PERMANENTEMENTE?')">REMOVER</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<a href="{{ url_for('logout') }}" class="btn btn-dark w-100 mt-4">SAIR DO SISTEMA</a>
 {% endblock %}

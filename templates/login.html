@@ -1,23 +1,20 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
-<div class="row justify-content-center pt-5">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-lg">
-            <div class="card-body p-5">
-                <h3 class="text-center fw-bold mb-4">LOGIN</h3>
-                <form method="POST">
-                    <div class="mb-3">
-                        <label>E-mail ou Usuário</label>
-                        <input type="text" name="login" class="form-control" required>
-                    </div>
-                    <div class="mb-4">
-                        <label>Senha (Matrícula)</label>
-                        <input type="password" name="password" class="form-control" required>
-                    </div>
-                    <button class="btn btn-acpamsal w-100 py-2">ENTRAR NO SISTEMA</button>
-                </form>
-            </div>
+<div class="py-3">
+    <h5 class="fw-bold text-center">ACESSO AO PORTAL</h5>
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in msgs %}<div class="alert alert-{{cat}} p-1 small text-center">{{msg}}</div>{% endfor %}
+    {% endwith %}
+    <form method="POST">
+        <div class="mb-3">
+            <label class="small fw-bold">E-mail:</label>
+            <input type="email" name="email" class="form-control border-dark" required>
         </div>
-    </div>
+        <div class="mb-3">
+            <label class="small fw-bold">Matrícula (Senha):</label>
+            <input type="password" name="senha" class="form-control border-dark" required>
+        </div>
+        <button type="submit" class="btn btn-dark w-100">ENTRAR</button>
+    </form>
 </div>
 {% endblock %}

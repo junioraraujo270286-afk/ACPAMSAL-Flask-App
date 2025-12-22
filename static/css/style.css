@@ -1,0 +1,26 @@
+:root {
+    --acpamsal-yellow: #fdd835;
+    --acpamsal-yellow-dark: #fbc02d;
+    --acpamsal-black: #1a1a1a;
+    --acpamsal-text-white: #ffffff;
+}
+
+body {
+    background-color: #f4f4f4;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Fundo em degradê amarelo para cabeçalhos e crachá */
+.bg-acpamsal-gradient {
+    background: linear-gradient(180deg, var(--acpamsal-yellow) 0%, var(--acpamsal-yellow-dark) 100%);
+}
+
+.bg-acpamsal-black {
+    background-color: var(--acpamsal-black);
+}
+
+/* Estilo para a logo dinâmica no topo */
+.navbar-logo {
+    height: 50px;
+    width: auto;
+}

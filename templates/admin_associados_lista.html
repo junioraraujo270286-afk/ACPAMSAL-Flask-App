@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold m-0">GESTÃO DE ASSOCIADOS</h4>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-dark btn-sm fw-bold border-dark">VOLTAR</a>
+</div>
+
+<div class="mb-3">
+    <a href="{{ url_for('novo_associado') }}" class="btn btn-primary w-100 fw-bold border-dark shadow-sm">
+        + CADASTRAR NOVO MOTOTAXISTA (MOTO E CONDUTOR)
+    </a>
+</div>
+
+<div class="list-group">
+    {% for s in lista %}
+    <div class="list-group-item border-dark mb-2 shadow-sm d-flex justify-content-between align-items-center bg-white">
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" 
+                 class="rounded border border-dark me-3" 
+                 style="width: 50px; height: 50px; object-fit: cover;"
+                 onerror="this.src='https://via.placeholder.com/50'">
+            <div>
+                <strong class="text-uppercase d-block">{{ s.nome }}</strong>
+                <span class="badge bg-dark">MAT: {{ s.matricula }}</span>
+                <span class="badge bg-warning text-dark border border-dark">PLACA: {{ s.moto_placa }}</span>
+            </div>
+        </div>
+        <div class="btn-group">
+            <a href="{{ url_for('editar_associado', id=s.id) }}" class="btn btn-sm btn-outline-dark fw-bold">ALTERAR</a>
+            <a href="{{ url_for('remover_associado', id=s.id) }}" 
+               class="btn btn-sm btn-danger fw-bold border-dark" 
+               onclick="return confirm('ATENÇÃO: Deseja remover permanentemente este associado e todo seu histórico?')">X</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+        <p class="text-muted fw-bold">NENHUM ASSOCIADO CADASTRADO.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('gerar_pdf') }}" target="_blank" class="btn btn-danger w-100 fw-bold border-dark shadow-sm">
+        GERAR RELATÓRIO PDF DE ASSOCIADOS
+    </a>
+</div>
+{% endblock %}

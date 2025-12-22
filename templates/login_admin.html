@@ -1,51 +1,27 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
-<style>
-    /* Reset para esconder a sidebar na tela de login se desejar, ou apenas centralizar */
-    .content-area { margin-left: 0 !important; display: flex; align-items: center; justify-content: center; min-height: 80vh; }
-    .sidebar { display: none; } /* Esconde o menu na tela de login para focar no acesso */
-
-    .login-container {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        padding: 50px;
-        width: 100%;
-        max-width: 450px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        border-top: 5px solid #D4AF37;
-    }
-    .brand-logo { font-size: 2.5rem; font-weight: 900; color: #1a1a1a; letter-spacing: -1px; }
-    .brand-logo span { color: #D4AF37; }
-    .btn-gold {
-        background: #D4AF37;
-        color: white;
-        font-weight: bold;
-        padding: 12px;
-        border-radius: 10px;
-        border: none;
-        transition: 0.3s;
-    }
-    .btn-gold:hover { background: #b8962d; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
-    .form-control { border-radius: 10px; padding: 12px; border: 1px solid #ddd; }
-</style>
-
-<div class="login-container text-center">
-    <div class="mb-4">
-        <h1 class="brand-logo">ACP<span>AMSAL</span></h1>
-        <p class="text-muted text-uppercase small fw-bold">Gestão Administrativa Especializada</p>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card p-4 shadow-lg border-warning">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-lock text-warning" style="font-size: 3rem;"></i>
+                <h3 class="fw-bold text-white">RESTRITO ACPAMSAL</h3>
+            </div>
+            <form action="{{ url_for('login_sistema') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">E-MAIL</label>
+                    <input type="text" name="user" class="form-control bg-dark text-white border-secondary" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">SENHA</label>
+                    <input type="password" name="pass" class="form-control bg-dark text-white border-secondary" required>
+                </div>
+                <button type="submit" class="btn btn-warning w-100 fw-bold py-2">ENTRAR NO PAINEL</button>
+            </form>
+        </div>
+        <div class="text-center mt-3">
+            <a href="/" class="text-secondary small text-decoration-none"><i class="bi bi-arrow-left"></i> Voltar para Consulta</a>
+        </div>
     </div>
-    
-    <form method="POST">
-        <div class="mb-3 text-start">
-            <label class="form-label small fw-bold text-dark">E-MAIL ADMINISTRATIVO</label>
-            <input type="email" name="user" class="form-control" placeholder="admin@acpamsal.com" required>
-        </div>
-        <div class="mb-4 text-start">
-            <label class="form-label small fw-bold text-dark">CHAVE DE ACESSO</label>
-            <input type="password" name="pass" class="form-control" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="btn btn-gold w-100 mb-3">AUTENTICAR NO SISTEMA</button>
-        <a href="/" class="text-decoration-none text-muted small">Voltar para Consulta Pública</a>
-    </form>
 </div>
 {% endblock %}
