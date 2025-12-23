@@ -1,46 +1,41 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-dark text-warning fw-bold d-flex justify-content-between">
-        <span><i class="fas fa-bullhorn me-2"></i>PAINEL DE PUBLICIDADE</span>
-        <span>Mídia (Imagens/Vídeos)</span>
-    </div>
-    <div class="card-body">
-        <form method="POST" enctype="multipart/form-data" class="row g-3">
-            <div class="col-md-6">
-                <label class="fw-bold small">NOME DO ANUNCIANTE</label>
-                <input type="text" name="nome" class="form-control border-2" placeholder="Ex: Farmácia Salinas" required>
-            </div>
-            <div class="col-md-4">
-                <label class="fw-bold small">ARQUIVO (IMG OU MP4)</label>
-                <input type="file" name="arquivo" class="form-control border-2" required>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-taxi w-100">CADASTRAR</button>
-            </div>
-        </form>
-        
-        <hr class="my-4">
-        
-        <div class="row">
-            {% for p in props %}
-            <div class="col-md-3 mb-4">
-                <div class="card h-100 shadow-sm border">
-                    <div class="p-2">
-                        {% if p.tipo == 'vid' %}
-                        <video width="100%" height="150" class="rounded"><source src="{{ url_for('static', filename='uploads/' + p.arquivo) }}"></video>
-                        {% else %}
-                        <img src="{{ url_for('static', filename='uploads/' + p.arquivo) }}" class="img-fluid rounded" style="height: 150px; object-fit: cover;">
-                        {% endif %}
+<div class="container py-4 text-dark">
+    <div class="card shadow border-0 mb-4">
+        <div class="card-header bg-dark text-warning fw-bold">GERENCIAR PUBLICIDADE (Banners e Vídeos)</div>
+        <div class="card-body bg-light">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>NOME DO ANUNCIANTE</label>
+                        <input type="text" name="nome" class="form-control" required>
                     </div>
-                    <div class="card-footer bg-white border-0 text-center">
-                        <p class="fw-bold small mb-2">{{ p.nome }}</p>
-                        <a href="{{ url_for('remover', tipo='prop', id=p.id) }}" class="btn btn-sm btn-danger w-100">EXCLUIR</a>
+                    <div class="col-md-6 mb-3">
+                        <label>ARQUIVO (IMG ou MP4)</label>
+                        <input type="file" name="arquivo" class="form-control" required>
                     </div>
                 </div>
-            </div>
-            {% endfor %}
+                <button type="submit" class="btn btn-dark w-100 fw-bold">PUBLICAR ANÚNCIO</button>
+            </form>
         </div>
+    </div>
+
+    <div class="row">
+        {% for p in props %}
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-2 text-center">
+                    {% if p.tipo == 'img' %}
+                    <img src="{{ url_for('static', filename='uploads/' + p.arquivo) }}" class="img-fluid rounded mb-2" style="max-height: 150px;">
+                    {% else %}
+                    <video src="{{ url_for('static', filename='uploads/' + p.arquivo) }}" class="img-fluid rounded mb-2" style="max-height: 150px;" muted></video>
+                    {% endif %}
+                    <p class="small fw-bold mb-1">{{ p.nome }}</p>
+                    <a href="{{ url_for('remover', tipo='prop', id=p.id) }}" class="btn btn-sm btn-danger w-100">Remover</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

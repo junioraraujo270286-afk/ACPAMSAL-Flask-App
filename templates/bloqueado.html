@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card-lux p-5 text-center border-danger">
+            <i class="fas fa-exclamation-triangle fa-5x text-danger mb-4"></i>
+            <h2 class="text-danger fw-bold">ACESSO NEGADO</h2>
+            <hr class="bg-secondary">
+            <p class="fs-4">
+                ASSOCIADO DESLIGADO POR FALTA DE PAGAMENTO DE MENSALIDADE, AGUARDANDO A ENTREGA DOS UNIFORMES CONFORME TERMO DE RESPONSABILIDADE ASSINADO E REGISTRADO NO CARTÓRIO.
+            </p>
+            <a href="{{ url_for('login') }}" class="btn btn-lux mt-4">VOLTAR</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

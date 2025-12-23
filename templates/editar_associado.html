@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header text-uppercase">EDITAR PERFIL DO ASSOCIADO</div>
+    <div class="card-body p-4 text-dark">
+        <form action="{{ url_for('editar_associado', id=s.id) }}" method="POST" enctype="multipart/form-data" class="row g-3">
+            <div class="col-md-6">
+                <label class="fw-bold">NOME COMPLETO</label>
+                <input type="text" name="nome" class="form-control input-acp" value="{{ s.nome }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="fw-bold">MATRÍCULA</label>
+                <input type="text" name="matricula" class="form-control input-acp" value="{{ s.matricula }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="fw-bold">ALTERAR FOTO (OPCIONAL)</label>
+                <input type="file" name="foto" class="form-control input-acp">
+            </div>
+
+            <div class="col-md-5">
+                <label class="fw-bold">RUA</label>
+                <input type="text" name="rua" class="form-control input-acp" value="{{ s.rua }}">
+            </div>
+            <div class="col-md-2">
+                <label class="fw-bold">Nº</label>
+                <input type="text" name="numero" class="form-control input-acp" value="{{ s.numero }}">
+            </div>
+            <div class="col-md-5">
+                <label class="fw-bold">BAIRRO</label>
+                <input type="text" name="bairro" class="form-control input-acp" value="{{ s.bairro }}">
+            </div>
+
+            <div class="col-md-4">
+                <label class="fw-bold">PONTO DE TRABALHO</label>
+                <input type="text" name="ponto" class="form-control input-acp" value="{{ s.ponto }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold">PLACA</label>
+                <input type="text" name="placa" class="form-control input-acp" value="{{ s.placa }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold">CONTATO</label>
+                <input type="text" name="contato" class="form-control input-acp" value="{{ s.contato }}">
+            </div>
+
+            <div class="col-12 text-center mt-4">
+                <a href="{{ url_for('admin_associados') }}" class="btn btn-secondary px-4 me-2">CANCELAR</a>
+                <button type="submit" class="btn px-5">SALVAR ALTERAÇÕES</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

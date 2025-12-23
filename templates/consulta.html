@@ -1,42 +1,46 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row justify-content-center pt-3">
-    <div class="col-md-6 text-center">
-        {% if suspenso %}
-            <div class="card border-0 shadow-lg bg-white rounded-4">
-                <div class="bg-danger p-4 text-white rounded-top-4">
-                    <i class="fas fa-exclamation-triangle fa-3x mb-2"></i>
-                    <h4 class="fw-bold mb-0">MATRÍCULA SUSPENSA</h4>
-                </div>
-                <div class="card-body p-4">
-                    <div class="alert alert-dark fw-bold text-uppercase p-3 border-start border-danger border-4" style="font-size: 0.9rem; text-align: justify; line-height: 1.4;">
-                        "{{ msg }}"
-                    </div>
-                    <p class="text-muted small">Para regularização, o condutor deve procurar a sede da ACPAMSAL imediatamente.</p>
-                </div>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header text-center text-uppercase">
+                Consulta de Associado
             </div>
-        {% else %}
-            <h5 class="fw-bold text-muted mb-3 text-uppercase">Consulta de Regularidade</h5>
-            <form action="{{ url_for('consulta') }}" method="GET" class="card p-3 shadow-sm border-0 mb-4">
-                <input type="text" name="q" class="form-control form-control-lg text-center fw-bold" placeholder="PLACA OU MATRÍCULA" value="{{ query }}">
-                <button class="btn btn-taxi w-100 mt-2 fw-bold py-2">CONSULTAR</button>
-            </form>
-
-            {% if s %}
-                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-                    <div class="bg-success text-white py-2 fw-bold">CONDUTOR AUTORIZADO</div>
-                    <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="img-fluid" style="width: 100%; height: 350px; object-fit: cover;">
-                    <div class="p-3">
-                        <h4 class="fw-bold mb-1">{{ s.nome.upper() }}</h4>
-                        <p class="text-muted small mb-2">Matrícula: {{ s.matricula }}</p>
-                        <div class="bg-dark text-warning p-2 rounded fs-2 fw-bold shadow-sm">{{ s.placa }}</div>
-                        <p class="mt-3 text-muted small">Veículo: {{ s.modelo }}</p>
+            <div class="card-body bg-white">
+                <form action="{{ url_for('consulta') }}" method="GET">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" placeholder="PLACA ou MATRÍCULA" value="{{ query }}" required>
+                        <button class="btn btn-dark fw-bold text-warning" type="submit">BUSCAR</button>
                     </div>
-                </div>
-            {% elif query %}
-                <div class="alert alert-warning fw-bold">Nenhum condutor encontrado com estes dados.</div>
-            {% endif %}
-        {% endif %}
+                </form>
+
+                {% if aviso_desligado %}
+                    <div class="alert alert-danger mt-4 p-4 border-start border-5 border-danger">
+                        <h4 class="text-center fw-bold"><i class="fas fa-gavel"></i> AVISO IMPORTANTE</h4>
+                        <p class="text-center fw-bold text-uppercase mb-1">Associado desligado da associação</p>
+                        <p class="text-center mb-3">Aguardando a entrega dos uniformes.</p>
+                        <hr>
+                        <p class="small text-muted mb-0">
+                            <strong>Apropriação Indébita (Art. 168 CP):</strong> Sujeito a processos criminais e cíveis.
+                        </p>
+                    </div>
+                {% elif s %}
+                    <div class="text-center mt-4">
+                        <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded border border-dark mb-3" width="140" style="box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                        <h4 class="fw-bold text-dark">{{ s.nome.upper() }}</h4>
+                        <span class="badge bg-success mb-3">SITUAÇÃO: ATIVO</span>
+                        <table class="table table-sm text-start mt-2">
+                            <tr><th width="40%">MATRÍCULA:</th><td>{{ s.matricula }}</td></tr>
+                            <tr><th>PLACA:</th><td>{{ s.placa }}</td></tr>
+                            <tr><th>PONTO:</th><td>{{ s.ponto_trabalho }}</td></tr>
+                            <tr><th>VEÍCULO:</th><td>{{ s.modelo }} ({{ s.cor }})</td></tr>
+                        </table>
+                    </div>
+                {% elif query %}
+                    <div class="alert alert-light mt-4 text-center border">Registro não encontrado.</div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

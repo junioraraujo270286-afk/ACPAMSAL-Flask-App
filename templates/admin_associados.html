@@ -1,57 +1,57 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-    <div class="card-header bg-dark text-warning p-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="fas fa-motorcycle me-2"></i>GESTÃO DE CONDUTORES</h5>
-        <span class="badge bg-taxi">SÓCIOS ATIVOS</span>
+<div class="container py-4">
+    <div class="card shadow-lg border-0 mb-5">
+        <div class="card-header bg-dark text-warning fw-bold">NOVO CADASTRO DE ASSOCIADO</div>
+        <div class="card-body bg-light text-dark">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-3 mb-2"><label>MATRÍCULA</label><input type="text" name="matricula" class="form-control" required></div>
+                    <div class="col-md-4 mb-2"><label>PONTO DE TRABALHO</label><input type="text" name="ponto_trabalho" class="form-control"></div>
+                    <div class="col-md-5 mb-2"><label>NOME COMPLETO</label><input type="text" name="nome" class="form-control" required></div>
+                    <div class="col-md-4 mb-2"><label>RUA</label><input type="text" name="rua" class="form-control"></div>
+                    <div class="col-md-2 mb-2"><label>Nº</label><input type="text" name="numero" class="form-control"></div>
+                    <div class="col-md-3 mb-2"><label>BAIRRO</label><input type="text" name="bairro" class="form-control"></div>
+                    <div class="col-md-3 mb-2"><label>PONTO DE REFERÊNCIA</label><input type="text" name="ponto_referencia" class="form-control"></div>
+                    <div class="col-md-3 mb-2"><label>RG</label><input type="text" name="rg" class="form-control"></div>
+                    <div class="col-md-3 mb-2"><label>CPF</label><input type="text" name="cpf" class="form-control"></div>
+                    <div class="col-md-3 mb-2"><label>CNH (SIM ou NÃO)</label><input type="text" name="cnh" class="form-control"></div>
+                    <div class="col-md-3 mb-2"><label>E-MAIL</label><input type="email" name="email" class="form-control" required></div>
+                    <div class="col-md-3 mb-2"><label>PLACA</label><input type="text" name="placa" class="form-control" required></div>
+                    <div class="col-md-3 mb-2"><label>MODELO</label><input type="text" name="modelo" class="form-control"></div>
+                    <div class="col-md-2 mb-2"><label>COR</label><input type="text" name="cor" class="form-control"></div>
+                    <div class="col-md-2 mb-2"><label>ANO</label><input type="text" name="ano" class="form-control"></div>
+                    <div class="col-md-2 mb-2"><label>RENAVAM</label><input type="text" name="renavam" class="form-control"></div>
+                    <div class="col-md-12 mb-3"><label class="fw-bold">FOTO DO ASSOCIADO</label><input type="file" name="foto" class="form-control border-primary" accept="image/*"></div>
+                </div>
+                <button type="submit" class="btn btn-dark w-100 fw-bold text-warning">CADASTRAR ASSOCIADO</button>
+            </form>
+        </div>
     </div>
-    <div class="card-body bg-white">
-        <form action="{{ url_for('admin_associados') }}" method="POST" class="row g-3 mb-4 border-bottom pb-4">
-            <div class="col-md-2">
-                <label class="small fw-bold text-muted">MATRÍCULA</label>
-                <input type="text" name="matricula" class="form-control border-2" placeholder="001" required>
-            </div>
-            <div class="col-md-4">
-                <label class="small fw-bold text-muted">NOME COMPLETO</label>
-                <input type="text" name="nome" class="form-control border-2" required>
-            </div>
-            <div class="col-md-4">
-                <label class="small fw-bold text-muted">E-MAIL (LOGIN)</label>
-                <input type="email" name="email" class="form-control border-2" required>
-            </div>
-            <div class="col-md-2">
-                <label class="small fw-bold text-muted">PLACA</label>
-                <input type="text" name="placa" class="form-control border-2" placeholder="ABC1D23" required>
-            </div>
-            <div class="col-md-9">
-                <label class="small fw-bold text-muted">MODELO DA MOTO</label>
-                <input type="text" name="modelo" class="form-control border-2" placeholder="Honda CG 160 Titan..." required>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-taxi w-100 fw-bold py-2 shadow-sm">CADASTRAR SÓCIO</button>
-            </div>
-        </form>
 
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-warning text-dark fw-bold">ASSOCIADOS CADASTRADOS</div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
                     <tr>
-                        <th>Foto</th><th>Condutor</th><th>Matrícula</th><th>Placa</th><th>Ações</th>
+                        <th>Foto</th>
+                        <th>Matrícula</th>
+                        <th>Nome</th>
+                        <th>Placa</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-dark">
                     {% for s in socios %}
                     <tr>
+                        <td><img src="{{ url_for('static', filename='uploads/' + s.foto) }}" width="50" height="50" class="rounded-circle" style="object-fit: cover;"></td>
+                        <td>{{ s.matricula }}</td>
+                        <td>{{ s.nome }}</td>
+                        <td><span class="badge bg-dark">{{ s.placa }}</span></td>
                         <td>
-                            <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded-circle border border-2 border-warning shadow-sm" width="50" height="50" style="object-fit: cover;">
-                        </td>
-                        <td><span class="fw-bold d-block">{{ s.nome.upper() }}</span><small class="text-muted">{{ s.email }}</small></td>
-                        <td class="text-muted">{{ s.matricula }}</td>
-                        <td><span class="badge bg-dark text-warning p-2 fs-6">{{ s.placa }}</span></td>
-                        <td>
-                            <a href="{{ url_for('gerar_carteirinha', id=s.id) }}" class="btn btn-sm btn-dark" title="Imprimir PDF"><i class="fas fa-id-card text-warning"></i></a>
-                            <a href="{{ url_for('perfil', id=s.id) }}" class="btn btn-sm btn-outline-dark"><i class="fas fa-user-edit"></i></a>
-                            <a href="{{ url_for('remover', tipo='socio', id=s.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Excluir condutor?')"><i class="fas fa-trash-alt"></i></a>
+                            <a href="{{ url_for('perfil', id=s.id) }}" class="btn btn-sm btn-info text-white"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('remover', tipo='associado', id=s.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Excluir associado?')"><i class="fas fa-trash"></i></a>
                         </td>
                     </tr>
                     {% endfor %}

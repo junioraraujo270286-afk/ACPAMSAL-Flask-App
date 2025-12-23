@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>CARTEIRINHA DIGITAL - ACPAMSAL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap');
+        
+        body { background-color: #1a1a1a; font-family: 'Oswald', sans-serif; }
+        
+        .card-container {
+            width: 350px;
+            height: 550px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            position: relative;
+            border: 4px solid #ffc107;
+        }
+
+        /* Cabeçalho Oficial */
+        .card-header-oficial {
+            background-color: #000;
+            padding: 15px;
+            text-align: center;
+            color: #ffc107;
+        }
+        .card-header-oficial img { height: 50px; margin-bottom: 5px; }
+        .card-header-oficial p { font-size: 0.6rem; margin: 0; color: #fff; line-height: 1; }
+
+        /* Foto do Condutor */
+        .foto-box {
+            width: 130px;
+            height: 130px;
+            border: 4px solid #ffc107;
+            margin: 15px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #eee;
+        }
+
+        .info-section { padding: 0 20px; text-align: center; }
+        .info-section h4 { color: #000; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; font-size: 1.2rem; }
+        .info-section .matricula { color: #ffc107; background: #000; display: inline-block; padding: 2px 15px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; }
+
+        /* Tabela de Dados Luxo */
+        .dados-tabela { font-size: 0.75rem; text-align: left; color: #333; margin-bottom: 10px; }
+        .dados-tabela span { font-weight: bold; color: #000; text-transform: uppercase; }
+
+        /* QR Code */
+        .qr-section { background: #f8f8f8; padding: 10px; border-top: 2px solid #eee; text-align: center; }
+        .qr-section img { width: 90px; }
+
+        /* Rodapé com contatos solicitados */
+        .card-footer-oficial {
+            background: #000;
+            color: #fff;
+            font-size: 0.55rem;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card-container">
+    <div class="card-header-oficial">
+        <img src="{{ url_for('static', filename='uploads/logo_acpamsal.png') }}">
+        <p class="fw-bold">CNPJ 39.242.691/0001-75</p>
+    </div>
+
+    <div class="foto-box">
+        <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="w-100 h-100" style="object-fit: cover;">
+    </div>
+
+    <div class="info-section">
+        <h4>{{ s.nome.split(' ')[0] }} {{ s.nome.split(' ')[-1] }}</h4>
+        <div class="matricula">SÓCIO Nº {{ s.matricula }}</div>
+        
+        <div class="row dados-tabela g-1">
+            <div class="col-6">RG: <span>{{ s.rg }}</span></div>
+            <div class="col-6">CPF: <span>{{ s.cpf }}</span></div>
+            <div class="col-6">PLACA: <span>{{ s.placa }}</span></div>
+            <div class="col-6">CNH: <span>{{ s.cnh }}</span></div>
+            <div class="col-12">VEÍCULO: <span>{{ s.modelo }} ({{ s.cor }})</span></div>
+        </div>
+    </div>
+
+    <div class="qr-section">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ link_validacao }}" alt="QR Code de Validação">
+        <p class="m-0" style="font-size: 0.6rem; font-weight: bold;">AUTENTICIDADE DIGITAL</p>
+    </div>
+
+    <div class="card-footer-oficial">
+        RUA PEDRO DE ALCÂNTARA BARROS Nº 20, BAIRRO SÃO TOMÉ - SALINÓPOLIS/PA<br>
+        WHATSAPP (91)98212-2175 / E-MAIL acpamsal@gmail.com
+    </div>
+</div>
+
+<div class="text-center mt-3">
+    <button onclick="window.print()" class="btn btn-outline-warning btn-sm text-white border-warning">
+        <i class="fas fa-print me-2"></i>IMPRIMIR OU SALVAR PDF
+    </button>
+    <br><br>
+    <a href="{{ url_for('perfil') }}" class="text-secondary text-decoration-none small">VOLTAR AO PERFIL</a>
+</div>
+
+</body>
+</html>

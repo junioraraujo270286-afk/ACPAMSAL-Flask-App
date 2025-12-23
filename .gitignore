@@ -1,6 +1,5 @@
+acpamsal.db
+static/uploads/*
+!static/uploads/default.jpg
 __pycache__/
 *.pyc
-instance/
-.env
-# Se quiser que o banco suba vazio, ignore o .db
-acpamsal_gestao.db

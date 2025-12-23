@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-lg border-0 overflow-hidden">
+        <div class="p-5 text-center text-white" style="background: #000; border-bottom: 5px solid #ffc107;">
+            <div class="position-relative mx-auto mb-3" style="width: 200px; height: 200px;">
+                <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded-circle border border-warning w-100 h-100" style="object-fit: cover; border-width: 4px !important;">
+                <button class="btn btn-warning btn-sm position-absolute bottom-0 end-0 rounded-circle" onclick="document.getElementById('mudar_foto').click()">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <form id="foto_form" action="{{ url_for('alterar_foto') }}" method="POST" enctype="multipart/form-data" style="display:none;">
+                    <input type="file" id="mudar_foto" name="nova_foto" onchange="document.getElementById('foto_form').submit()">
+                </form>
+            </div>
+            <h2 class="fw-bold">{{ s.nome.upper() }}</h2>
+            <span class="badge bg-warning text-dark">MATRÍCULA: {{ s.matricula }}</span>
+        </div>
+        <div class="card-body p-4 text-dark">
+            <div class="row">
+                <div class="col-md-6 border-end">
+                    <h5 class="fw-bold border-bottom pb-2">DOCUMENTAÇÃO</h5>
+                    <p><strong>RG:</strong> {{ s.rg }} | <strong>CPF:</strong> {{ s.cpf }}</p>
+                    <p><strong>PONTO:</strong> {{ s.ponto_trabalho }}</p>
+                    <p><strong>ENDEREÇO:</strong> {{ s.rua }}, {{ s.numero }} - {{ s.bairro }}</p>
+                    <p><strong>CNH:</strong> {{ s.cnh }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="fw-bold border-bottom pb-2">DADOS DO VEÍCULO</h5>
+                    <div class="bg-dark text-warning p-2 text-center rounded h3 mb-3">{{ s.placa }}</div>
+                    <p><strong>MODELO:</strong> {{ s.modelo }} | <strong>COR:</strong> {{ s.cor }}</p>
+                    <p><strong>ANO:</strong> {{ s.ano }} | <strong>RENAVAM:</strong> {{ s.renavam }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
