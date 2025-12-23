@@ -1,6 +1,6 @@
-echo "Flask
+Flask
 Flask-SQLAlchemy
 reportlab
 qrcode
 gunicorn
-Pillow" > requirements.txt
+Pillow
