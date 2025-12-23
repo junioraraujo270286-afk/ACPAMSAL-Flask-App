@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-dark text-warning fw-bold">NOVO GRUPO FAMILIAR</div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="row g-2 mb-3">
+                <div class="col-8"><input type="text" name="responsavel" class="form-control" placeholder="Responsável" required></div>
+                <div class="col-4"><input type="text" name="contato" class="form-control" placeholder="Tel" required></div>
+            </div>
+            <div id="deps">
+                <div class="row g-1 mb-1 d-row">
+                    <div class="col-6"><input type="text" name="dep_nome[]" class="form-control form-control-sm" placeholder="Nome"></div>
+                    <div class="col-2"><input type="number" name="dep_idade[]" class="form-control form-control-sm" placeholder="Idade"></div>
+                    <div class="col-4"><input type="text" name="dep_contato[]" class="form-control form-control-sm" placeholder="Tel"></div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-dark mt-2" onclick="add()">+ Dependente</button>
+            <button type="submit" class="btn btn-taxi w-100 mt-3 fw-bold">SALVAR</button>
+        </form>
+    </div>
+</div>
+
+{% for f in familias %}
+<div class="card mb-3 border-warning border-2">
+    <div class="card-body p-2">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0 text-dark">{{ f.responsavel_nome }} <small class="text-muted">{{ f.contato }}</small></h6>
+            <a href="{{ url_for('remover', tipo='familia', id=f.id) }}" class="text-danger"><i class="fas fa-trash-alt"></i></a>
+        </div>
+        <table class="table table-sm table-striped small mb-0">
+            <tr class="bg-dark text-white"><th>Nome</th><th>Idade</th><th>Contato</th></tr>
+            {% for d in f.dependentes.split(' | ') %}
+                {% set info = d.split(')-') %}
+                {% set ni = info[0].split('(') %}
+                <tr><td>{{ ni[0] }}</td><td>{{ ni[1] if ni|length > 1 }}</td><td>{{ info[1] if info|length > 1 }}</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endfor %}
+<script>function add(){ const r = document.querySelector('.d-row').cloneNode(true); r.querySelectorAll('input').forEach(i=>i.value=''); document.getElementById('deps').appendChild(r); }</script>
+{% endblock %}

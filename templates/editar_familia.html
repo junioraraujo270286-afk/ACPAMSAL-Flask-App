@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-dark text-warning p-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-edit me-2"></i>EDITAR CADASTRO FAMILIAR</h5>
+                <a href="{{ url_for('admin_familias') }}" class="btn btn-sm btn-outline-warning border-2 fw-bold">VOLTAR</a>
+            </div>
+            
+            <div class="checker-line"></div>
+
+            <div class="card-body bg-white p-4">
+                <form action="{{ url_for('editar_familia', id=f.id) }}" method="POST">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="small fw-bold text-muted text-uppercase">Responsável pelo Seguro</label>
+                            <input type="text" name="responsavel" class="form-control border-2" value="{{ f.responsavel_nome }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted text-uppercase">Contato de Emergência</label>
+                            <input type="text" name="contato" class="form-control border-2" value="{{ f.contato }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="small fw-bold text-muted text-uppercase d-block mb-2">Relação de Dependentes (Nome, Idade e Contato)</label>
+                        <textarea name="dependentes" class="form-control border-2" rows="6" placeholder="Ex: Maria Oliveira (30 anos) - Tel: (91) 98888-8888 | João Silva (10 anos)...">{{ f.dependentes }}</textarea>
+                        <div class="form-text">Mantenha o padrão: <b>Nome (Idade) - Contato</b> separados por uma barra vertical ( | ).</div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-taxi py-3 fw-bold shadow-sm">
+                            <i class="fas fa-save me-2"></i>SALVAR ALTERAÇÕES
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilo adicional para foco nos campos de edição */
+    .form-control:focus {
+        border-color: var(--amarelo) !important;
+        box-shadow: 0 0 0 0.25rem rgba(255, 204, 0, 0.2);
+    }
+</style>
+{% endblock %}

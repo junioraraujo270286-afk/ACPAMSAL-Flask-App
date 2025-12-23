@@ -1,198 +1,210 @@
-import os, uuid
-from datetime import datetime, date
-from flask import Flask, render_template, redirect, url_for, session, request, flash, make_response
+import os, uuid, io
+from datetime import datetime
+from flask import Flask, render_template, redirect, url_for, session, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
-import pdfkit
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+import qrcode
 
+base_dir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
-app.secret_key = "acpamsal_oficial_2026_final"
+app.secret_key = "ACPAMSAL_OFICIAL_2025_FINAL_FIXED"
 
-# --- CONFIGURAÇÕES DE DIRETÓRIO ---
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'acpamsal.db')
-app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
+app.config['UPLOAD_FOLDER'] = os.path.join(base_dir, 'static/uploads')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'acpamsal.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db = SQLAlchemy(app)
 
-# --- MODELOS DE DADOS ---
-class Configuracao(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    logo = db.Column(db.String(255), default='logo.png')
-    fundo_img = db.Column(db.String(255), default='')
-    nome_entidade = db.Column(db.String(500), default="ASSOCIAÇÃO DOS CONDUTORES PROFISSIONAIS AUTÔNOMOS MOTOFRETISTAS, MOTOCICLISTAS, MOTOTAXISTAS E MOTOBOYS DO MUNICÍPIO DE SALINÓPOLIS - ACPAMSAL")
-    endereco = db.Column(db.String(255), default="Rua Pedro de Alcântara Barros Nº 20, Bairro São Tomé - CEP 68.721-000 - Salinópolis-PA")
-    contatos = db.Column(db.String(255), default="WhatsApp: (91) 98212-2175 | acpamsal@gmail.com")
-
+# --- MODELOS ---
 class Associado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    foto = db.Column(db.String(255), default='default.jpg')
-    nome = db.Column(db.String(100), nullable=False)
-    matricula = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique=True)
-    rg = db.Column(db.String(20)); contato = db.Column(db.String(20)); ponto = db.Column(db.String(100))
-    moto_placa = db.Column(db.String(20)); moto_marca = db.Column(db.String(50)); moto_modelo = db.Column(db.String(50)); moto_cor = db.Column(db.String(30))
-    pagamentos = db.relationship('Pagamento', backref='associado', lazy=True, cascade="all, delete-orphan")
-
-    def esta_apto_consulta(self):
-        # Regra: Início em 01/01/2026. Se dever 3 meses ou mais, bloqueia.
-        inicio = date(2026, 1, 1)
-        hoje = date.today()
-        if hoje < inicio: return True
-        meses_passados = (hoje.year - inicio.year) * 12 + hoje.month - inicio.month + 1
-        return len(self.pagamentos) >= (meses_passados - 2)
-
-class Pagamento(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    referencia = db.Column(db.String(20))
-    data_pag = db.Column(db.DateTime, default=datetime.now)
-    associado_id = db.Column(db.Integer, db.ForeignKey('associado.id'))
+    matricula = db.Column(db.String(50), unique=True)
+    nome = db.Column(db.String(100))
+    email = db.Column(db.String(100))
+    placa = db.Column(db.String(20))
+    modelo = db.Column(db.String(50))
+    foto = db.Column(db.String(255), default="default.jpg")
 
 class Familia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    responsavel = db.Column(db.String(100), nullable=False)
-    endereco = db.Column(db.String(200)); bairro = db.Column(db.String(100)); contato = db.Column(db.String(20))
-    num_eleitores = db.Column(db.Integer, default=0); observacao = db.Column(db.Text)
+    responsavel_nome = db.Column(db.String(100))
+    contato = db.Column(db.String(20))
+    dependentes = db.Column(db.Text)
 
-# --- CONTEXTO GLOBAL ---
+class Propaganda(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100))
+    arquivo = db.Column(db.String(255))
+    tipo = db.Column(db.String(10))
+
+class Mensalidade(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    socio_id = db.Column(db.Integer, db.ForeignKey('associado.id'))
+    mes_referencia = db.Column(db.String(20))
+    isento = db.Column(db.Boolean, default=False)
+    socio = db.relationship('Associado', backref='mensalidades')
+
 @app.context_processor
 def inject_global():
-    conf = Configuracao.query.first()
-    if not conf:
-        conf = Configuracao(logo='logo.png')
-        db.session.add(conf); db.session.commit()
-    return dict(config_global=conf, now=datetime.now().strftime('%d/%m/%Y %H:%M'))
+    return dict(propagandas=Propaganda.query.all())
 
-# --- ROTAS DE AUTENTICAÇÃO ---
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        u, s = request.form.get('email'), request.form.get('senha')
-        if u == "acpamsal@gmail.com" and s == "230808Deus#":
-            session['admin'] = True; return redirect(url_for('admin_dashboard'))
-        socio = Associado.query.filter_by(email=u, matricula=s).first()
-        if socio:
-            session['socio_id'] = socio.id; return redirect(url_for('perfil_associado'))
-        flash("E-mail ou Matrícula incorretos.", "danger")
-    return render_template('login.html')
+def calcular_atrasos(socio_id):
+    meses_ano = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+    inicio_cobranca_idx = 7 # AGOSTO
+    mes_atual_idx = datetime.now().month - 1
+    pagos = [m.mes_referencia for m in Mensalidade.query.filter_by(socio_id=socio_id).all()]
+    return [meses_ano[i] for i in range(inicio_cobranca_idx, mes_atual_idx + 1) if meses_ano[i] not in pagos]
+
+# --- ROTAS ---
+@app.route('/')
+def login(): return render_template('login.html')
+
+@app.route('/auth', methods=['POST'])
+def auth():
+    u, p = request.form.get('email'), request.form.get('senha')
+    if u == "acpamsal@gmail.com" and p == "230808Deus#":
+        session['admin'] = True
+        return redirect(url_for('admin_associados'))
+    s = Associado.query.filter_by(email=u, matricula=p).first()
+    if s:
+        if len(calcular_atrasos(s.id)) >= 3:
+            return "ACESSO SUSPENSO POR INADIMPLÊNCIA."
+        session['socio_id'] = s.id
+        return redirect(url_for('perfil'))
+    return redirect(url_for('login'))
 
 @app.route('/logout')
-def logout(): session.clear(); return redirect(url_for('login'))
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
-# --- ROTAS PÚBLICAS E PERFIL ---
-@app.route('/')
-def publico():
+@app.route('/consulta')
+def consulta():
     q = request.args.get('q', '').strip()
-    socio = None; msg = None
-    if q:
-        socio = Associado.query.filter((Associado.nome.like(f"%{q}%")) | (Associado.moto_placa == q.upper()) | (Associado.matricula == q)).first()
-        if socio and not socio.esta_apto_consulta():
-            msg = "UNIFORME COM NOTIFICAÇÃO DE RECOLHIMENTO DE ACORDO COM TERMO DE RESPONSABILIDADE ASSINADA E REGISTRADA EM CARTÓRIO."
-            socio = None
-    return render_template('publico.html', socio=socio, msg=msg)
+    s = Associado.query.filter((Associado.placa.ilike(f"%{q}%")) | (Associado.matricula == q) | (Associado.nome.ilike(f"%{q}%"))).first() if q else None
+    if s and len(calcular_atrasos(s.id)) >= 3:
+        msg = "UNIFORME COM A MATRÍCULA SUSPENSA E AGUARDANDO REMOÇÃO DAS VIAS PÚBLICAS, DE ACORDO COM ASSINATURA DO TERMO DE RESPONSABILIDADE ASSINADO E REGISTRADO EM CARTÓRIO."
+        return render_template('consulta.html', suspenso=True, msg=msg, query=q)
+    return render_template('consulta.html', s=s, query=q)
 
-@app.route('/perfil', methods=['GET', 'POST'])
-def perfil_associado():
-    if not session.get('socio_id'): return redirect(url_for('login'))
-    s = Associado.query.get(session['socio_id'])
-    if request.method == 'POST':
-        f = request.files.get('foto')
-        if f:
-            fn = secure_filename(f"{uuid.uuid4().hex}.jpg")
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
-            s.foto = fn; db.session.commit(); flash("Foto atualizada!", "success")
-    return render_template('perfil_associado.html', socio=s)
+@app.route('/perfil')
+def perfil():
+    s_id = session.get('socio_id') or request.args.get('id')
+    s = Associado.query.get(s_id)
+    if not s: return redirect(url_for('login'))
+    return render_template('perfil.html', s=s, atrasos=calcular_atrasos(s.id))
 
-@app.route('/perfil/pagar')
-def pagar_mensalidade():
-    if not session.get('socio_id'): return redirect(url_for('login'))
-    pix = {"cnpj": "39.242.691/0001-75", "nome": "ACPAMSAL"}
-    return render_template('perfil_pagar.html', pix=pix)
-
-# --- ÁREA ADMINISTRATIVA ---
-@app.route('/admin/dashboard')
-def admin_dashboard():
-    if not session.get('admin'): return redirect(url_for('login'))
-    return render_template('admin_dashboard.html')
-
-@app.route('/admin/associados')
-def lista_associados():
-    if not session.get('admin'): return redirect(url_for('login'))
-    return render_template('admin_associados_lista.html', lista=Associado.query.all())
-
-@app.route('/admin/associado/novo', methods=['GET', 'POST'])
-def novo_associado():
+@app.route('/admin/associados', methods=['GET', 'POST'])
+def admin_associados():
     if not session.get('admin'): return redirect(url_for('login'))
     if request.method == 'POST':
         f = request.files.get('foto')
-        fn = secure_filename(f"{uuid.uuid4().hex}.jpg") if f else "default.jpg"
+        fn = secure_filename(uuid.uuid4().hex + ".jpg") if f else "default.jpg"
         if f: f.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
-        novo = Associado(nome=request.form['nome'].upper(), matricula=request.form['matricula'], email=request.form['email'], rg=request.form['rg'], contato=request.form['contato'], ponto=request.form['ponto'], moto_placa=request.form['placa'].upper(), moto_marca=request.form['marca'], moto_modelo=request.form['modelo'], moto_cor=request.form['cor'], foto=fn)
-        db.session.add(novo); db.session.commit(); return redirect(url_for('lista_associados'))
-    return render_template('admin_associado_form.html', socio=None)
+        n = Associado(matricula=request.form.get('matricula'), nome=request.form.get('nome'), 
+                      email=request.form.get('email'), placa=request.form.get('placa').upper(), 
+                      modelo=request.form.get('modelo'), foto=fn)
+        db.session.add(n)
+        db.session.commit()
+    return render_template('admin_associados.html', socios=Associado.query.all())
 
-@app.route('/admin/associado/editar/<int:id>', methods=['GET', 'POST'])
-def editar_associado(id):
-    if not session.get('admin'): return redirect(url_for('login'))
-    s = Associado.query.get_or_404(id)
-    if request.method == 'POST':
-        s.nome, s.matricula, s.moto_placa = request.form['nome'].upper(), request.form['matricula'], request.form['placa'].upper()
-        db.session.commit(); return redirect(url_for('lista_associados'))
-    return render_template('admin_associado_form.html', socio=s)
-
-@app.route('/admin/associado/remover/<int:id>')
-def remover_associado(id):
-    if not session.get('admin'): return redirect(url_for('login'))
-    db.session.delete(Associado.query.get_or_404(id)); db.session.commit(); return redirect(url_for('lista_associados'))
-
-@app.route('/admin/mensalidades')
-def lista_mensalidades():
-    if not session.get('admin'): return redirect(url_for('login'))
-    pags = Pagamento.query.order_by(Pagamento.data_pag.desc()).all()
-    return render_template('admin_mensalidades_lista.html', pagamentos=pags)
-
-@app.route('/admin/mensalidade/nova', methods=['GET', 'POST'])
-def nova_mensalidade():
+@app.route('/admin/familias', methods=['GET', 'POST'])
+def admin_familias():
     if not session.get('admin'): return redirect(url_for('login'))
     if request.method == 'POST':
-        p = Pagamento(associado_id=request.form.get('socio_id'), referencia=request.form.get('ref'))
-        db.session.add(p); db.session.commit(); return redirect(url_for('lista_mensalidades'))
-    return render_template('admin_mensalidade_form.html', socios=Associado.query.all())
+        nomes, idades, contatos = request.form.getlist('dep_nome[]'), request.form.getlist('dep_idade[]'), request.form.getlist('dep_contato[]')
+        deps = " | ".join([f"{n}({i}a)-{c}" for n, i, c in zip(nomes, idades, contatos) if n])
+        nova = Familia(responsavel_nome=request.form.get('responsavel'), contato=request.form.get('contato'), dependentes=deps)
+        db.session.add(nova); db.session.commit()
+    return render_template('admin_familias.html', familias=Familia.query.all())
 
-@app.route('/admin/mensalidade/remover/<int:id>')
-def remover_mensalidade(id):
-    if not session.get('admin'): return redirect(url_for('login'))
-    db.session.delete(Pagamento.query.get_or_404(id)); db.session.commit(); return redirect(url_for('lista_mensalidades'))
-
-@app.route('/admin/familias')
-def lista_familias():
-    if not session.get('admin'): return redirect(url_for('login'))
-    return render_template('familias_lista.html', familias=Familia.query.all())
-
-@app.route('/admin/familias/cadastrar', methods=['GET', 'POST'])
-def cadastrar_familia():
+@app.route('/admin/financeiro', methods=['GET', 'POST'])
+def admin_financeiro():
     if not session.get('admin'): return redirect(url_for('login'))
     if request.method == 'POST':
-        nova = Familia(responsavel=request.form['responsavel'].upper(), endereco=request.form['endereco'], bairro=request.form['bairro'], contato=request.form['contato'], num_eleitores=request.form['eleitores'], observacao=request.form['obs'])
-        db.session.add(nova); db.session.commit(); return redirect(url_for('lista_familias'))
-    return render_template('familias_form.html', familia=None)
+        mid = request.form.get('mensalidade_id')
+        if mid:
+            m = Mensalidade.query.get(mid)
+            m.mes_referencia = request.form.get('mes')
+            m.isento = True if request.form.get('isento') else False
+        else:
+            db.session.add(Mensalidade(socio_id=request.form.get('socio_id'), 
+                                     mes_referencia=request.form.get('mes'), 
+                                     isento=True if request.form.get('isento') else False))
+        db.session.commit()
+    return render_template('admin_financeiro.html', socios=Associado.query.all(), mensalidades=Mensalidade.query.all())
 
-@app.route('/admin/familias/remover/<int:id>')
-def remover_familia(id):
+@app.route('/admin/financeiro/remover/<int:id>')
+def remover_financeiro(id):
     if not session.get('admin'): return redirect(url_for('login'))
-    db.session.delete(Familia.query.get_or_404(id)); db.session.commit(); return redirect(url_for('lista_familias'))
+    m = Mensalidade.query.get(id)
+    if m: db.session.delete(m); db.session.commit()
+    return redirect(url_for('admin_financeiro'))
 
-@app.route('/admin/relatorio/pdf')
-def gerar_pdf():
+@app.route('/admin/publicidade', methods=['GET', 'POST'])
+def admin_publicidade():
     if not session.get('admin'): return redirect(url_for('login'))
-    html = render_template('pdf_modelo.html', lista=Associado.query.all())
-    pdf = pdfkit.from_string(html, False)
-    resp = make_response(pdf)
-    resp.headers['Content-Type'] = 'application/pdf'
-    return resp
+    if request.method == 'POST':
+        f = request.files.get('arquivo')
+        if f:
+            ext = f.filename.split('.')[-1].lower()
+            t = 'vid' if ext in ['mp4', 'mov', 'avi'] else 'img'
+            fn = secure_filename(uuid.uuid4().hex + "." + ext)
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
+            db.session.add(Propaganda(nome=request.form.get('nome'), arquivo=fn, tipo=t)); db.session.commit()
+    return render_template('admin_publicidade.html', props=Propaganda.query.all())
+
+@app.route('/remover/<string:tipo>/<int:id>')
+def remover(tipo, id):
+    if not session.get('admin'): return redirect(url_for('login'))
+    item = Propaganda.query.get(id) if tipo == 'prop' else Familia.query.get(id) if tipo == 'familia' else Associado.query.get(id)
+    if item: db.session.delete(item); db.session.commit()
+    return redirect(request.referrer)
+
+@app.route('/gerar_carteirinha/<int:id>')
+def gerar_carteirinha(id):
+    s = Associado.query.get(id)
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=(240, 380))
+    c.setFillColorRGB(0.1, 0.1, 0.1); c.rect(0, 0, 240, 380, fill=1)
+    c.setFillColorRGB(1, 0.8, 0); c.rect(0, 305, 240, 75, fill=1)
+    
+    logo_path = os.path.join(app.config['UPLOAD_FOLDER'], 'logo_acpamsal.png')
+    if os.path.exists(logo_path):
+        c.drawImage(logo_path, 90, 335, width=60, height=40, mask='auto')
+    
+    c.setFillColor(colors.black); c.setFont("Helvetica-Bold", 8)
+    c.drawCentredString(120, 318, "CNPJ 39.242.691/0001-75")
+    
+    f_p = os.path.join(app.config['UPLOAD_FOLDER'], s.foto)
+    if os.path.exists(f_p): c.drawImage(f_p, 70, 195, width=100, height=100)
+    
+    c.setFillColor(colors.white); c.setFont("Helvetica-Bold", 14)
+    c.drawCentredString(120, 175, s.nome.upper())
+    c.setFillColorRGB(1, 0.8, 0); c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(120, 150, s.placa)
+    
+    qr = qrcode.make(f"https://acpamsal.com/consulta?q={s.placa}")
+    qrp = os.path.join(app.config['UPLOAD_FOLDER'], f"qr_{s.id}.png")
+    qr.save(qrp)
+    c.drawImage(qrp, 90, 80, width=60, height=60)
+    
+    c.setFillColorRGB(1, 0.8, 0); c.rect(0, 0, 240, 65, fill=1)
+    c.setFillColor(colors.black); c.setFont("Helvetica-Bold", 6)
+    c.drawCentredString(120, 48, "RUA PEDRO DE ALCÂNTARA BARROS Nº 20, BAIRRO SÃO TOMÉ")
+    c.drawCentredString(120, 38, "SALINÓPOLIS/PA")
+    c.setFont("Helvetica-Bold", 6.5)
+    c.drawCentredString(120, 22, "WHATSAPP (91)98212-2175 / E-MAIL acpamsal@gmail.com")
+    
+    c.showPage(); c.save(); buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=f"carteirinha_{s.matricula}.pdf")
 
 if __name__ == '__main__':
-    with app.app_context(): db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)

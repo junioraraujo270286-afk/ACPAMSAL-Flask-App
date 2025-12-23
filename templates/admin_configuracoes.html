@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card shadow border-0 p-4">
+    <h4 class="fw-bold text-dark border-bottom pb-3">CONFIGURAÇÕES DA ASSOCIAÇÃO</h4>
+    <form method="POST" enctype="multipart/form-data" class="row g-3 mt-2">
+        <div class="col-md-6">
+            <label class="fw-bold small">NOME DA ENTIDADE</label>
+            <input type="text" name="nome" class="form-control" value="{{ conf.nome_entidade }}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="fw-bold small">LOGOMARCA (PNG/JPG)</label>
+            <input type="file" name="logo" class="form-control">
+        </div>
+        <div class="col-md-12">
+            <label class="fw-bold small">ENDEREÇO COMPLETO</label>
+            <input type="text" name="endereco" class="form-control" value="{{ conf.endereco }}">
+        </div>
+        <div class="col-md-6">
+            <label class="fw-bold small">WHATSAPP</label>
+            <input type="text" name="whatsapp" class="form-control" value="{{ conf.whatsapp }}">
+        </div>
+        <div class="col-md-6">
+            <label class="fw-bold small">EMAIL DE CONTATO</label>
+            <input type="email" name="email" class="form-control" value="{{ conf.email }}">
+        </div>
+        <div class="col-12 mt-4">
+            <button type="submit" class="btn btn-success fw-bold px-5">SALVAR ALTERAÇÕES</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

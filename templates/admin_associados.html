@@ -1,37 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="text-center mb-4">
-    <h3 class="fw-bold border-bottom border-dark pb-2">ADMINISTRAÇÃO</h3>
-</div>
-
-<div class="row g-2 mb-4">
-    <div class="col-md-3"><a href="{{ url_for('admin_cadastrar') }}" class="btn btn-primary w-100 shadow-sm">NOVO ASSOCIADO</a></div>
-    <div class="col-md-3"><a href="{{ url_for('admin_mensalidade') }}" class="btn btn-success w-100 shadow-sm">MENSALIDADES</a></div>
-    <div class="col-md-3"><a href="{{ url_for('gerar_pdf') }}" class="btn btn-secondary w-100 shadow-sm">RELATÓRIO PDF</a></div>
-    <div class="col-md-3"><a href="{{ url_for('admin_config') }}" class="btn btn-dark w-100 shadow-sm">CONFIGURAÇÃO</a></div>
-</div>
-
-<div class="list-group">
-    {% for s in associados %}
-    <div class="list-group-item d-flex justify-content-between align-items-center border-dark bg-warning-subtle mb-2 rounded shadow-sm">
-        <div class="d-flex align-items-center">
-            <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded border border-dark me-3" style="width: 60px; height: 60px; object-fit: cover;">
-            <div>
-                <strong class="text-uppercase">{{ s.nome }}</strong><br>
-                <small class="fw-bold">PLACA: {{ s.moto_placa }} | MAT: {{ s.matricula }}</small><br>
-                {% if s.esta_em_dia() %}
-                    <span class="badge bg-success border border-dark">CREDITADO</span>
-                {% else %}
-                    <span class="badge bg-danger border border-dark">DESLIGADO</span>
-                {% endif %}
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="card-header bg-dark text-warning p-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-motorcycle me-2"></i>GESTÃO DE CONDUTORES</h5>
+        <span class="badge bg-taxi">SÓCIOS ATIVOS</span>
+    </div>
+    <div class="card-body bg-white">
+        <form action="{{ url_for('admin_associados') }}" method="POST" class="row g-3 mb-4 border-bottom pb-4">
+            <div class="col-md-2">
+                <label class="small fw-bold text-muted">MATRÍCULA</label>
+                <input type="text" name="matricula" class="form-control border-2" placeholder="001" required>
             </div>
-        </div>
-        <div class="d-flex flex-column gap-1">
-            <a href="{{ url_for('admin_editar', id=s.id) }}" class="btn btn-sm btn-dark">EDITAR</a>
-            <a href="{{ url_for('admin_excluir', id=s.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('REMOVER PERMANENTEMENTE?')">REMOVER</a>
+            <div class="col-md-4">
+                <label class="small fw-bold text-muted">NOME COMPLETO</label>
+                <input type="text" name="nome" class="form-control border-2" required>
+            </div>
+            <div class="col-md-4">
+                <label class="small fw-bold text-muted">E-MAIL (LOGIN)</label>
+                <input type="email" name="email" class="form-control border-2" required>
+            </div>
+            <div class="col-md-2">
+                <label class="small fw-bold text-muted">PLACA</label>
+                <input type="text" name="placa" class="form-control border-2" placeholder="ABC1D23" required>
+            </div>
+            <div class="col-md-9">
+                <label class="small fw-bold text-muted">MODELO DA MOTO</label>
+                <input type="text" name="modelo" class="form-control border-2" placeholder="Honda CG 160 Titan..." required>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-taxi w-100 fw-bold py-2 shadow-sm">CADASTRAR SÓCIO</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Foto</th><th>Condutor</th><th>Matrícula</th><th>Placa</th><th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in socios %}
+                    <tr>
+                        <td>
+                            <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded-circle border border-2 border-warning shadow-sm" width="50" height="50" style="object-fit: cover;">
+                        </td>
+                        <td><span class="fw-bold d-block">{{ s.nome.upper() }}</span><small class="text-muted">{{ s.email }}</small></td>
+                        <td class="text-muted">{{ s.matricula }}</td>
+                        <td><span class="badge bg-dark text-warning p-2 fs-6">{{ s.placa }}</span></td>
+                        <td>
+                            <a href="{{ url_for('gerar_carteirinha', id=s.id) }}" class="btn btn-sm btn-dark" title="Imprimir PDF"><i class="fas fa-id-card text-warning"></i></a>
+                            <a href="{{ url_for('perfil', id=s.id) }}" class="btn btn-sm btn-outline-dark"><i class="fas fa-user-edit"></i></a>
+                            <a href="{{ url_for('remover', tipo='socio', id=s.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Excluir condutor?')"><i class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-    {% endfor %}
 </div>
-<a href="{{ url_for('logout') }}" class="btn btn-dark w-100 mt-4">SAIR DO SISTEMA</a>
 {% endblock %}

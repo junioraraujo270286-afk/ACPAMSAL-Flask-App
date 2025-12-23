@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card shadow border-0 rounded-4 overflow-hidden">
+    <div class="bg-dark p-4 text-center">
+        <img src="{{ url_for('static', filename='uploads/' + s.foto) }}" class="rounded-circle border border-4 border-warning shadow" width="180" height="180" style="object-fit:cover;">
+        <h3 class="text-warning mt-3 fw-bold">{{ s.nome.upper() }}</h3>
+        <span class="badge bg-taxi px-4 py-2 fs-6 shadow-sm">{{ s.placa }}</span>
+    </div>
+    <div class="card-body p-4 bg-white">
+        <h5 class="fw-bold text-muted border-bottom pb-2 mb-3">DADOS CADASTRAIS</h5>
+        <div class="row g-3">
+            <div class="col-md-6"><strong>NOME:</strong><br><span class="text-dark">{{ s.nome }}</span></div>
+            <div class="col-md-6"><strong>MATRÍCULA:</strong><br><span class="text-dark">{{ s.matricula }}</span></div>
+            <div class="col-md-6"><strong>E-MAIL / LOGIN:</strong><br><span class="text-dark">{{ s.email }}</span></div>
+            <div class="col-md-6"><strong>PLACA DO VEÍCULO:</strong><br><span class="text-dark">{{ s.placa }}</span></div>
+            <div class="col-md-12"><strong>MODELO / COR:</strong><br><span class="text-dark">{{ s.modelo }}</span></div>
+        </div>
+        
+        <h5 class="fw-bold text-muted border-bottom pb-2 mb-3 mt-4">SITUAÇÃO FINANCEIRA (AGO/2025+)</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-1 fw-bold text-success">PAGAMENTOS REGISTRADOS:</p>
+                {% for m in s.mensalidades %}
+                    <span class="badge {{ 'bg-primary' if m.isento else 'bg-success' }} mb-1">{{ m.mes_referencia }} {{ '(ISENTO)' if m.isento }}</span>
+                {% endfor %}
+            </div>
+            <div class="col-md-6">
+                <p class="mb-1 fw-bold text-danger">MENSES EM ATRASO:</p>
+                {% for a in atrasos %}
+                    <span class="badge bg-danger mb-1">{{ a }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

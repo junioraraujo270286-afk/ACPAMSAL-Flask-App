@@ -1,5 +1,5 @@
 Flask
 Flask-SQLAlchemy
+gunicorn
 pdfkit
 werkzeug
-gunicorn

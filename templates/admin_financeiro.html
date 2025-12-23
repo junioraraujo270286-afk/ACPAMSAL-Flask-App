@@ -1,70 +1,71 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold m-0 text-dark">GESTÃO DE MENSALIDADES</h3>
-    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-dark fw-bold border-dark shadow-sm">
-        <i class="bi bi-arrow-left"></i> VOLTAR AO PAINEL
-    </a>
-</div>
-
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card p-4 border-dark shadow bg-warning">
-            <h5 class="fw-bold text-center mb-3">DAR BAIXA</h5>
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="fw-bold">Selecionar Associado:</label>
-                    <select name="socio_id" class="form-select border-dark" required>
-                        <option value="">Selecione...</option>
-                        {% for s in socios %}
-                        <option value="{{ s.id }}">{{ s.nome }} ({{ s.matricula }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="fw-bold">Mês de Referência:</label>
-                    <input type="text" name="referencia" class="form-control border-dark" placeholder="Ex: 01/2026" required>
-                </div>
-                <div class="mb-3">
-                    <label class="fw-bold">Valor:</label>
-                    <input type="text" class="form-control border-dark" value="R$ 10,00" disabled>
-                </div>
-                <button type="submit" class="btn btn-success w-100 fw-bold border-dark py-2">REGISTRAR PAGAMENTO</button>
-            </form>
-        </div>
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-dark text-warning p-3">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-cash-register me-2"></i>CONTROLE FINANCEIRO</h5>
     </div>
-
-    <div class="col-md-8">
-        <div class="card border-dark shadow">
-            <div class="card-header bg-dark text-white fw-bold">PAGAMENTOS RECENTES</div>
-            <div class="table-responsive bg-white">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-warning">
-                        <tr>
-                            <th>Associado</th>
-                            <th>Mês Referência</th>
-                            <th>Data Registro</th>
-                            <th class="text-center">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for p in pagamentos %}
-                        <tr>
-                            <td class="fw-bold">{{ p.associado.nome }}</td>
-                            <td><span class="badge bg-dark">{{ p.referencia }}</span></td>
-                            <td>{{ p.data_pag.strftime('%d/%m/%Y') }}</td>
-                            <td class="text-center">
-                                <form method="POST" onsubmit="return confirm('Excluir este pagamento?')">
-                                    <input type="hidden" name="pag_id" value="{{ p.id }}">
-                                    <button type="submit" name="excluir_pag" class="btn btn-sm btn-danger">Excluir</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="card-body bg-white">
+        <form action="{{ url_for('admin_financeiro') }}" method="POST" id="financeForm" class="row g-3 mb-4">
+            <input type="hidden" name="mensalidade_id" id="m_id">
+            <div class="col-md-4">
+                <label class="small fw-bold">SÓCIO</label>
+                <select name="socio_id" id="s_id" class="form-select border-2" required>
+                    <option value="">Selecione...</option>
+                    {% for s in socios %}
+                    <option value="{{ s.id }}">{{ s.nome }} ({{ s.placa }})</option>
+                    {% endfor %}
+                </select>
             </div>
+            <div class="col-md-3">
+                <label class="small fw-bold">MÊS REFERÊNCIA</label>
+                <select name="mes" id="mes_ref" class="form-select border-2" required>
+                    <option value="Agosto">Agosto</option><option value="Setembro">Setembro</option>
+                    <option value="Outubro">Outubro</option><option value="Novembro">Novembro</option><option value="Dezembro">Dezembro</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-center pt-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="isento" id="isentoCheck">
+                    <label class="form-check-label fw-bold text-primary" for="isentoCheck">ISENTO</label>
+                </div>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-taxi w-100 fw-bold" id="btnSubmit">REGISTRAR</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr><th>Sócio</th><th>Mês</th><th>Status</th><th>Ações</th></tr>
+                </thead>
+                <tbody>
+                    {% for m in mensalidades %}
+                    <tr>
+                        <td class="fw-bold">{{ m.socio.nome }}</td>
+                        <td>{{ m.mes_referencia }}</td>
+                        <td>
+                            {% if m.isento %}<span class="badge bg-primary">ISENTO</span>{% else %}<span class="badge bg-success">PAGO</span>{% endif %}
+                        </td>
+                        <td>
+                            <button onclick="editM('{{ m.id }}','{{ m.socio_id }}','{{ m.mes_referencia }}', {{ 'true' if m.isento else 'false' }})" class="btn btn-sm btn-outline-dark"><i class="fas fa-edit"></i></button>
+                            <a href="{{ url_for('remover_financeiro', id=m.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover este lançamento?')"><i class="fas fa-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+<script>
+function editM(id, sid, mes, isento) {
+    document.getElementById('m_id').value = id;
+    document.getElementById('s_id').value = sid;
+    document.getElementById('mes_ref').value = mes;
+    document.getElementById('isentoCheck').checked = isento;
+    document.getElementById('btnSubmit').innerText = "ATUALIZAR";
+    document.getElementById('btnSubmit').className = "btn btn-warning w-100 fw-bold";
+}
+</script>
 {% endblock %}

@@ -1,20 +1,68 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="py-3">
-    <h5 class="fw-bold text-center">ACESSO AO PORTAL</h5>
-    {% with msgs = get_flashed_messages(with_categories=true) %}
-        {% for cat, msg in msgs %}<div class="alert alert-{{cat}} p-1 small text-center">{{msg}}</div>{% endfor %}
-    {% endwith %}
-    <form method="POST">
-        <div class="mb-3">
-            <label class="small fw-bold">E-mail:</label>
-            <input type="email" name="email" class="form-control border-dark" required>
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="bg-dark p-4 text-center">
+                <i class="fas fa-user-shield fa-3x text-warning mb-2"></i>
+                <h4 class="text-white fw-bold mb-0">ACESSO RESTRITO</h4>
+                <p class="text-warning small mb-0 text-uppercase tracking-widest">Painel Administrativo / Sócio</p>
+            </div>
+            
+            <div class="checker-line"></div>
+
+            <div class="card-body p-4 bg-white">
+                <form action="{{ url_for('auth') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted">E-MAIL CADASTRADO</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-2"><i class="fas fa-envelope text-muted"></i></span>
+                            <input type="email" name="email" class="form-control border-2" placeholder="seu@email.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="small fw-bold text-muted">SENHA (Nº MATRÍCULA)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-2"><i class="fas fa-lock text-muted"></i></span>
+                            <input type="password" name="senha" class="form-control border-2" placeholder="********" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-taxi w-100 fw-bold py-2 shadow-sm mb-3">
+                        ENTRAR NO SISTEMA
+                    </button>
+                </form>
+
+                <div class="text-center">
+                    <hr>
+                    <p class="small text-muted mb-3">Não possui acesso? Procure a sede da ACPAMSAL.</p>
+                    
+                    <a href="{{ url_for('consulta') }}" class="btn btn-dark w-100 fw-bold py-2">
+                        <i class="fas fa-search me-2 text-warning"></i>CONSULTAR CONDUTOR
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label class="small fw-bold">Matrícula (Senha):</label>
-            <input type="password" name="senha" class="form-control border-dark" required>
+
+        <div class="mt-4 text-center">
+            <div class="badge bg-white text-dark shadow-sm p-2 rounded-pill border">
+                <i class="fas fa-lock text-success me-1"></i> Conexão Segura - Salinópolis, PA
+            </div>
         </div>
-        <button type="submit" class="btn btn-dark w-100">ENTRAR</button>
-    </form>
+    </div>
 </div>
+
+<style>
+    /* Ajuste para o formulário não ficar colado no topo em telas menores */
+    @media (max-width: 768px) {
+        .row { min-height: 60vh !important; margin-top: 20px; }
+    }
+    
+    /* Efeito de foco nos inputs */
+    .form-control:focus {
+        border-color: var(--amarelo-taxi);
+        box-shadow: 0 0 0 0.25rem rgba(255, 204, 0, 0.25);
+    }
+</style>
 {% endblock %}

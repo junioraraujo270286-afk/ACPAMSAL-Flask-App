@@ -1,77 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card p-4">
-            <h4 class="text-warning">BAIXA DE MENSALIDADE</h4>
-            <form method="POST">
-                <select name="associado_id" class="form-select mb-3 bg-dark text-white" required>
-                    <option value="">Selecione o Sócio...</option>
-                    {% for s in associados %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
-                </select>
-                <input type="text" name="mes" class="form-control mb-3" placeholder="Mês Referência" required>
-                <button type="submit" class="btn btn-warning w-100">REGISTRAR R$ 10,00</button>
-            </form>
+<div class="card shadow border-0 p-4">
+    <h4 class="fw-bold text-success"><i class="fas fa-cash-register me-2"></i>CONTROLE DE MENSALIDADES</h4>
+    
+    <form method="POST" class="row g-3 bg-light p-3 rounded mb-4 border-start border-success border-4">
+        <input type="hidden" name="id" id="mid">
+        <div class="col-md-4">
+            <label class="small fw-bold">ASSOCIADO</label>
+            <select name="socio_id" id="msocio" class="form-select" required>
+                {% for s in socios %}<option value="{{ s.id }}">{{ s.nome }} ({{ s.matricula }})</option>{% endfor %}
+            </select>
         </div>
-    </div>
-    <div class="col-md-8">
-        <div class="card p-3">
-            <h4 class="text-white">HISTÓRICO</h4>
-            <table class="table table-dark">
-                <thead><tr><th>SÓCIO</th><th>MÊS</th><th>VALOR</th><th>AÇÃO</th></tr></thead>
-                <tbody>
-                    {% for p in pagamentos %}
-                    <tr>
-                        <td>{{ p.associado.nome }}</td>
-                        <td>{{ p.referencia }}</td>
-                        <td class="text-success">R$ 10,00</td>
-                        <td>
-                            <form method="POST"><input type="hidden" name="id" value="{{ p.id }}">
-                            <button type="submit" name="del" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button></form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-2">
+            <label class="small fw-bold">MÊS/ANO</label>
+            <input type="text" name="mes_ano" id="mmes" class="form-control" placeholder="12/2025" required>
         </div>
-    </div>
-</div>
-{% endblock %}{% extends 'base.html' %}
-{% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card p-4">
-            <h4 class="text-warning">BAIXA DE MENSALIDADE</h4>
-            <form method="POST">
-                <select name="associado_id" class="form-select mb-3 bg-dark text-white" required>
-                    <option value="">Selecione o Sócio...</option>
-                    {% for s in associados %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
-                </select>
-                <input type="text" name="mes" class="form-control mb-3" placeholder="Mês Referência" required>
-                <button type="submit" class="btn btn-warning w-100">REGISTRAR R$ 10,00</button>
-            </form>
+        <div class="col-md-2">
+            <label class="small fw-bold">VALOR (R$)</label>
+            <input type="number" step="0.01" name="valor" id="mval" class="form-control" value="10.00">
         </div>
-    </div>
-    <div class="col-md-8">
-        <div class="card p-3">
-            <h4 class="text-white">HISTÓRICO</h4>
-            <table class="table table-dark">
-                <thead><tr><th>SÓCIO</th><th>MÊS</th><th>VALOR</th><th>AÇÃO</th></tr></thead>
-                <tbody>
-                    {% for p in pagamentos %}
-                    <tr>
-                        <td>{{ p.associado.nome }}</td>
-                        <td>{{ p.referencia }}</td>
-                        <td class="text-success">R$ 10,00</td>
-                        <td>
-                            <form method="POST"><input type="hidden" name="id" value="{{ p.id }}">
-                            <button type="submit" name="del" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button></form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-2">
+            <label class="small fw-bold">STATUS</label>
+            <select name="status" id="mstat" class="form-select">
+                <option value="Pago">Pago</option>
+                <option value="Pendente">Pendente</option>
+            </select>
         </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-success w-100 fw-bold">REGISTRAR</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead class="table-dark">
+                <tr><th>Sócio</th><th>Mês/Ano</th><th>Valor</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody>
+                {% for m in mensalidades %}
+                <tr>
+                    <td>{{ m.socio.nome }}</td>
+                    <td>{{ m.mes_ano }}</td>
+                    <td>R$ {{ "%.2f"|format(m.valor) }}</td>
+                    <td><span class="badge {{ 'bg-success' if m.status == 'Pago' else 'bg-danger' }}">{{ m.status }}</span></td>
+                    <td>
+                        <button onclick="editM('{{m.id}}','{{m.socio_id}}','{{m.mes_ano}}','{{m.valor}}','{{m.status}}')" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                        <a href="{{ url_for('remover', tipo='mensalidade', id=m.id) }}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
+<script>
+function editM(id, sid, mes, val, stat) {
+    document.getElementById('mid').value = id; document.getElementById('msocio').value = sid;
+    document.getElementById('mmes').value = mes; document.getElementById('mval').value = val;
+    document.getElementById('mstat').value = stat;
+}
+</script>
 {% endblock %}
