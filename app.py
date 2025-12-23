@@ -204,7 +204,9 @@ def gerar_carteirinha(id):
     c.showPage(); c.save(); buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"carteirinha_{s.matricula}.pdf")
 
+# Cria as tabelas toda vez que o app inicia (Essencial para o Render)
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
